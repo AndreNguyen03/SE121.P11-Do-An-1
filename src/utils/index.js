@@ -53,5 +53,29 @@ export const nfts = [
         name: "NFT 8",
         price: 0.001,
         image:nft8,
+    },
+    {
+        id:9,
+        name: "NFT 8",
+        price: 0.001,
+        image:nft8,
+    },
+    {
+        id:10,
+        name: "NFT 8",
+        price: 0.001,
+        image:nft8,
+    },
+    {
+        id:11,
+        name: "NFT 8",
+        price: 0.001,
+        image:nft8,
+    },
+    {
+        id:12,
+        name: "NFT 8",
+        price: 0.001,
+        image:nft8,
     }
 ]

@@ -9,7 +9,7 @@ function Navbar() {
         <Link to="/">
             <h1 className='text-lg font-bold'>
                 <span className='bg-gradient-to-r from-lime-500 to-blue-400 bg-clip-text text-transparent'>Sudoku</span> 
-                <span className='ml-1'>NFT</span>
+                <Link to="/" className='ml-1'>NFT</Link>
             </h1>
         </Link>
         <div>
