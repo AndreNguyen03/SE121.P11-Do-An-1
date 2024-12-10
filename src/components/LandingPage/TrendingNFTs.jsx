@@ -42,11 +42,11 @@ function TrendingNFTs() {
     <h1 className='text-black text-xl lg:text-3xl font-semibold mb-5'>Trending NFTs</h1>
     <div className="carousel-container">
         <Slider {...settings}>
-            {nfts.map((nft) => (
+            {/* {nfts.map((nft) => (
                 <div key={nft.id}>
                     <NFTCard nft={nft} />
                 </div>
-            ))}
+            ))} */}
         </Slider>
     </div>
 </div>
