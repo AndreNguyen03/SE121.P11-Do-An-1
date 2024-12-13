@@ -126,3 +126,40 @@ export async function listNFT(tokenId, price) {
     console.error("Error listing NFT:", error);
   }
 }
+
+
+// hàm rút ETH
+// export const withdrawFunds = async () => {
+//   const provider = new ethers.BrowserProvider(window.ethereum);
+//   const signer = await provider.getSigner();
+//   const contractWithSigner = contract.connect(signer);
+
+//   try {
+//     const tx = await contractWithSigner.withdrawFunds(); // Gọi hàm withdrawFunds từ hợp đồng
+//     console.log("Withdrawing funds...", tx.hash);
+//     await tx.wait();
+//     console.log("Funds withdrawn successfully!");
+//   } catch (error) {
+//     console.error("Error withdrawing funds:", error);
+//   }
+// };
+
+// hàm thay đổi phí mint
+export const setMintFee = async (newFee) => {
+  if (isNaN(newFee) || Number(newFee) <= 0) {
+    console.error("Invalid mint fee value!");
+    return;
+  }
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  const contractWithSigner = contract.connect(signer);
+
+  try {
+    const tx = await contractWithSigner.setMintFee(ethers.parseEther(newFee.toString())); // Cập nhật phí mint
+    console.log("Setting new mint fee...", tx.hash);
+    await tx.wait();
+    console.log("Mint fee updated successfully!");
+  } catch (error) {
+    console.error("Error setting mint fee:", error);
+  }
+};
