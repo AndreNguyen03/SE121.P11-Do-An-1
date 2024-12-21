@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import contractABI from '../../ignition/deployments/chain-11155111/artifacts/SudokuMarketplace.json'
-import { verifiedFetch } from "@helia/verified-fetch";
 import { fetchImageFromIPFS } from ".";
+import axiosInstance from "./axiosInstance";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -46,26 +46,28 @@ export async function fetchAllListedNFTs() {
     // Gọi hàm getAllListedNFTs từ smart contract
     const listedNFTs = await contract.getAllListedNFTs();
 
-    // Chuyển đổi dữ liệu Proxy thành mảng đối tượng thông thường
-    const nftsWithMetadata = await Promise.all(
+    // Lấy tất cả các tokenURI từ danh sách NFT
+    const tokenURIs = await Promise.all(
       listedNFTs.map(async (nft) => {
         const tokenURI = await contract.tokenURI(nft.tokenId);
-        console.log(tokenURI);
-        const response = await verifiedFetch(`ipfs://${tokenURI}`);
-        const metadata = await response.json();
-        console.log(metadata);
-        metadata.image = await fetchImageFromIPFS(metadata.image);
-        console.log("ảnh sau khi đổi link",metadata.image);
-        console.log(metadata);
-        return {
-          tokenId: nft.tokenId.toString(),               // Chuyển tokenId thành chuỗi
-          owner: nft.owner,                              // Địa chỉ ví
-          price: ethers.formatEther(nft.price),    // Chuyển price từ Wei sang ETH
-          isListed: nft.isListed,
-          metadata: metadata,
-        };
+        return tokenURI;
       })
     );
+
+    // Fetch tất cả metadata từ IPFS chỉ một lần
+    const metadataArray = await fetchMetadataFromIPFS(tokenURIs);
+
+    // Tạo mảng NFT có metadata
+    const nftsWithMetadata = listedNFTs.map((nft, index) => {
+      const metadata = metadataArray[index];
+      return {
+        tokenId: nft.tokenId.toString(),               // Chuyển tokenId thành chuỗi
+        owner: nft.owner,                              // Địa chỉ ví
+        price: ethers.formatEther(nft.price),    // Chuyển price từ Wei sang ETH
+        isListed: nft.isListed,
+        metadata: metadata,
+      };
+    });
 
     console.log('Fetched Listed NFTs:', nftsWithMetadata);
     return nftsWithMetadata;
@@ -74,6 +76,35 @@ export async function fetchAllListedNFTs() {
     return []; // Trả về mảng rỗng nếu có lỗi
   }
 }
+
+export async function fetchMetadataFromIPFS(tokenURIs) {
+  try {
+    // Tạo danh sách các IPFS link của các ảnh để fetch
+    const imageLinks = [];
+    const metadataArray = await Promise.all(
+      tokenURIs.map(async (tokenURI) => {
+        const response = await axiosInstance.get(`ipfs/${tokenURI}`);
+        const metadata = response.data;
+        imageLinks.push(metadata.image); // Lưu tất cả các ảnh cần fetch
+        return metadata;
+      })
+    );
+
+    // Fetch tất cả các ảnh từ IPFS chỉ một lần
+    const imageUrls = await Promise.all(imageLinks.map(fetchImageFromIPFS));
+
+    // Gắn URL ảnh vào metadata
+    imageUrls.forEach((imageUrl, index) => {
+      metadataArray[index].image = imageUrl;
+    });
+
+    return metadataArray;
+  } catch (error) {
+    console.error('Error fetching metadata from IPFS:', error);
+    return [];
+  }
+}
+
 
 
 export async function fetchUserNFTs(userAddress) {
@@ -90,8 +121,10 @@ export async function fetchUserNFTs(userAddress) {
     userNFTs.map(async (nft) => {
       const tokenURI = await contract.tokenURI(nft.tokenId);
       console.log(tokenURI);
-      const response = await verifiedFetch(`ipfs://${tokenURI}`);
-      const metadata = await response.json();
+
+      const response = await axiosInstance.get(`ipfs/${tokenURI}`);
+      const metadata = await response.data;
+      metadata.ipfsImage = metadata.image ;
       metadata.image = await fetchImageFromIPFS(metadata.image);
       console.log(metadata)
       return {
@@ -138,9 +171,9 @@ export async function fetchNFTById(tokenId) {
     const nft = await contract.getNFTById(tokenId);
     console.log("NFT Info: ", nft);
     const tokenURI = await contract.tokenURI(nft.tokenId);
-    console.log(tokenURI);
-    const response = await verifiedFetch(`ipfs://${tokenURI}`);
-    const metadata = await response.json();
+    const response = await axiosInstance.get(`ipfs/${tokenURI}`);
+    const metadata = await response.data;
+    metadata.ipfsImage = metadata.image ;
     metadata.image = await fetchImageFromIPFS(metadata.image);
     console.log(metadata)
     return {

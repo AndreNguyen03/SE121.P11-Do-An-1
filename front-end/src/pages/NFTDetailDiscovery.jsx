@@ -13,7 +13,7 @@ const NFTDetailDiscovery = () => {
   const navigate = useNavigate(); 
   const { state } = useLocation();
   const [nft, setNft] = useState(state?.nft || null);
-  const { getUserInfoByWalletAddress, account } = useWalletContext();
+  const { getUserInfoByWalletAddress, account, updateBalance } = useWalletContext();
   const [userInfo, setUserInfo] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [errorCode, setErrorCode] = useState(null);
@@ -36,7 +36,6 @@ const NFTDetailDiscovery = () => {
       console.log("NFT không tồn tại.");
       return;
     }
-
     const fetchUser = async (address) => {
       const user = await getUserInfoByWalletAddress(address);
       setUserInfo(user?.user);
@@ -82,7 +81,7 @@ const NFTDetailDiscovery = () => {
       if (result.success) {
         setTransactionHash(result.transactionHash);
         setPurchaseState("success");
-
+        await updateBalance();
         navigate("/profile"); 
       } else {
         setPurchaseState("error");
@@ -141,7 +140,7 @@ const NFTDetailDiscovery = () => {
             {/* Cột bên phải: Thông tin chi tiết */}
             <div className="md:w-4/5 md:pl-6 mt-6 md:mt-0">
               <h1 className="text-3xl font-bold mb-4">{nft.metadata.name}</h1>
-              <p className="text-gray-600 mb-2">
+              <p className=" mb-2 underline text-blue-400 cursor-pointer" onClick={() => {navigate(`/profile/${nft.owner}`, {state : {owner:nft.owner,userInfo:userInfo}});}}>
                 <strong>Owner:</strong> {nft.owner}
               </p>
               {/* Hiển thị User Info */}

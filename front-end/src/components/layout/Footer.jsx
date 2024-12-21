@@ -19,7 +19,7 @@ function Footer() {
         <div className="flex justify-center lg:justify-start space-x-4 text-white font-medium mt-6 lg:mt-0">
           <Link to="/discovery">Discovery</Link>
           <Link to="/mint">Mint</Link>
-          <Link to="/list">List</Link>
+          <Link to="/profile">Profile</Link>
         </div>
       </div>
       <div className="container mx-auto text-center text-white pt-4">

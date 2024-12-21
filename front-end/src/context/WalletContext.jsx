@@ -13,9 +13,28 @@ export const WalletProvider = ({ children }) => {
     const [signer, setSigner] = useState();
     const [showModal, setShowModal] = useState(false); // Hiển thị modal nhập thông tin
     const [provider, setProvider] = useState(null);
-    const [avatar,setAvatar] = useState(null);
+    const [avatar, setAvatar] = useState(null);
     const [balance, setBalance] = useState(null);
-    const [user,setUser] = useState(null);
+    const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [avatarLoaded, setAvatarLoaded] = useState(false);
+
+    const updateBalance = async (account,provider) => {
+
+        console.log(`account balance: `,account);
+        console.log(`provider balance: `,provider);
+
+        if (!account || !provider) return;
+        try {
+            const rawBalance = await provider.getBalance(account);
+            const formattedBalance = ethers.formatEther(rawBalance).slice(0, 6); // Chuyển đổi sang ETH
+            setBalance(formattedBalance); // Cập nhật số dư
+            console.log("Balance updated:", formattedBalance); // Log để kiểm tra
+        } catch (error) {
+            console.error("Error updating balance:", error);
+        }
+    };
+    
 
     const connectWallet = async () => {
         if (!window.ethereum) {
@@ -23,6 +42,7 @@ export const WalletProvider = ({ children }) => {
         }
 
         try {
+            setIsLoading(true);
             const provider = new ethers.BrowserProvider(window.ethereum);
             setProvider(provider);
             const signer = await provider.getSigner();
@@ -31,20 +51,17 @@ export const WalletProvider = ({ children }) => {
             setIsConnected(true);
             setAccount(accounts[0]);
 
-            // Lấy balance của tài khoản
-            const rawBalance = await provider.getBalance(accounts[0]);
-            const formattedBalance = ethers.formatEther(rawBalance).slice(0, 6); // Chuyển đổi sang ETH
-            setBalance(formattedBalance); // Lưu balance vào state
+            await updateBalance(accounts[0],provider);
 
+            console.log(`account after`, account);
             const userInfo = await getUserInfoByWalletAddress(accounts[0]);
-            setAvatar(userInfo.user.image);
-            setUser(userInfo.user);
-            console.log(userInfo.user);
-            if (userInfo === null) {
+            console.log(userInfo);
+            if (!userInfo) {
                 setShowModal(true); // Hiển thị modal nhập thông tin
+            } else {
+                setAvatar(userInfo.user.image);
+                setUser(userInfo.user);
             }
-
-
             const network = await provider.getNetwork();
             const chainID = network.chainId;
             const sepoliaNetworkId = "11155111"
@@ -53,11 +70,17 @@ export const WalletProvider = ({ children }) => {
                 alert("Please switch your metamask to sepolia network");
                 return;
             }
-
+            setTimeout(() => {
+                setAvatarLoaded(true);
+                setIsLoading(false); // Tắt loading sau 2 giây
+            }, 2000); // Thời gian delay 2 giây
+            
             // Kiểm tra thông tin người dùng
 
         } catch (error) {
             console.error("Connection error:", error)
+        } finally {
+            setIsLoading(false); 
         }
 
     };
@@ -67,6 +90,7 @@ export const WalletProvider = ({ children }) => {
         setAccount(null);
         setIsConnected(false);
         setSigner(null);
+        setProvider(null);
     };
 
     // Gọi API lấy thông tin người dùng
@@ -106,9 +130,8 @@ export const WalletProvider = ({ children }) => {
         }
     };
 
-
     return (
-        <WalletContext.Provider value={{user, balance, avatar, provider, account, setAccount, isConnected, setIsConnected, signer, setSigner, connectWallet, logoutWallet, createUser,getUserInfoByWalletAddress }}>
+        <WalletContext.Provider value={{updateBalance, isLoading, user, balance, avatar, provider, account, setAccount, isConnected, setIsConnected, signer, setSigner, connectWallet, logoutWallet, createUser, getUserInfoByWalletAddress }}>
             {children}
             {showModal && (
                 <UserModal
