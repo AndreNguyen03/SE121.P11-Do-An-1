@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { listNFT } from '../utils/blockchain';
 import { FaSpinner } from 'react-icons/fa';
+import { useWalletContext } from '../context/WalletContext';
+import socket from '../utils/socket';
 
 const NFTDetailList = ({ nft, closeModal, setNFTs }) => {
     const [listingPrice, setListingPrice] = useState('');
@@ -8,6 +10,7 @@ const NFTDetailList = ({ nft, closeModal, setNFTs }) => {
     const [error, setError] = useState(null); // State cho lỗi nếu có
     const [success, setSuccess] = useState(null); // State cho thông báo thành công
     const [showStatusModal, setShowStatusModal] = useState(false); // State để điều khiển Modal trạng thái
+    const { account, user, updateBalance } = useWalletContext();
 
     const handleListNFT = async (e) => {
         e.preventDefault();
@@ -28,8 +31,10 @@ const NFTDetailList = ({ nft, closeModal, setNFTs }) => {
                     )
                 );
 
+
                 setLoading(false);
                 setSuccess("NFT listed successfully!"); // Cập nhật thông báo thành công
+                await updateBalance();
             } catch (error) {
                 setLoading(false);
                 console.error("Error listing NFT: ", error);
@@ -44,9 +49,16 @@ const NFTDetailList = ({ nft, closeModal, setNFTs }) => {
         setListingPrice(e.target.value);
     };
 
-    const closeStatusModal = () => {
+    const closeStatusModal = async () => {
+        await sendNotificationToFollowers();
         setShowStatusModal(false); // Đóng modal khi xong
         closeModal(); // Đóng modal chi tiết NFT
+    };
+
+    const sendNotificationToFollowers = async () => {
+        const data = { nftTokenId: nft.tokenId, nftName: nft.metadata.name, nftImage: nft.metadata.ipfsImage, listedBy: user.walletAddress, listedByName: user.name }
+        console.log(data);
+        socket.emit(`listNFT`, data);
     };
 
     return (

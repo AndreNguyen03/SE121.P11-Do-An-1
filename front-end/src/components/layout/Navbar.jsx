@@ -4,12 +4,13 @@ import Button from '../reuse-component/Button'
 import Menu from './Menu'
 import { useWalletContext } from '../../context/WalletContext';
 import { ethers } from 'ethers';
+import NotificationBell from './NotificationBell';
+import socket from '../../utils/socket';
 
 function Navbar() {
-  const { isConnected, connectWallet, account, logoutWallet, signer, provider, avatar, balance } = useWalletContext();
+  const { isConnected, connectWallet, account, logoutWallet, avatar, balance, isLoading, avatarLoaded } = useWalletContext();
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
-  
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
@@ -18,7 +19,8 @@ function Navbar() {
   const handleLogout = () => {
     logoutWallet(); // Gọi hàm logout từ WalletContext
     setDropdownVisible(false); // Ẩn menu sau khi logout
-    logoutWallet()
+
+    socket.emit('logout', account.toLowerCase());
   };
 
   return (
@@ -34,20 +36,19 @@ function Navbar() {
           <Link to="/discovery">Discovery</Link>
           <Link to="/mint">Mint</Link>
           <Link to="/profile">Profile</Link>
+          {isConnected && <NotificationBell />}
           {isConnected ? (
             <div className="relative">
               <div
                 className="flex items-center gap-2 cursor-pointer p-2 bg-[#BAF6FD] rounded-full border border-[#BAF6FD]"
                 onClick={toggleDropdown}
               >
-                <img
-                  src={avatar}
-                  alt="avatar"
-                  className="w-8 h-8 rounded-full"
-                />
-                <span className="text-sm font-medium">
-                  {balance} SepETH
-                </span>
+                {avatarLoaded ? (
+                  <div className="w-5 h-5 border-4 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+                ) : (
+                  <img src={avatar} alt="avatar" className="w-8 h-8 rounded-full" />
+                )}
+                <span className="text-sm font-medium">{balance ? `${balance} SepETH` : "Loading..."}</span>
               </div>
 
               {dropdownVisible && (
@@ -61,8 +62,18 @@ function Navbar() {
                 </div>
               )}
             </div>
+          ) : isLoading ? (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 border-4 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+              <span className="text-sm">Connecting...</span>
+            </div>
           ) : (
-            <Button bg="bg-blue-500" textColor="text-white" btnText={"Connect Wallet"} onClick={connectWallet} />
+            <Button
+              bg="bg-blue-500"
+              textColor="text-white"
+              btnText="Connect Wallet"
+              onClick={connectWallet}
+            />
           )}
         </div>
         <Menu />

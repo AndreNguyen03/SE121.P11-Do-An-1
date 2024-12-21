@@ -1,4 +1,4 @@
-import { createUser, getUserByWalletAddress } from '../services/user.service.js';
+import * as userService from '../services/user.service.js';
 
 export const handleCreateUser = async (req, res) => {
   try {
@@ -10,7 +10,7 @@ export const handleCreateUser = async (req, res) => {
       return res.status(400).json({ message: 'Vui lòng nhập đủ thông tin!' });
     }
 
-    const user = await createUser({
+    const user = await userService.createUser({
       name,
       walletAddress,
       imagePath: req.file.path,
@@ -26,11 +26,32 @@ export const handleGetUser = async (req, res) => {
   try {
     const { walletAddress } = req.params;
 
-    const user = await getUserByWalletAddress(walletAddress);
+    const user = await userService.getUserByWalletAddress(walletAddress);
     console.log(user);
 
     res.status(200).json({ user });
   } catch (error) {
     res.status(404).json({ message: error.message });
+  }
+};
+
+
+export const follow = async (req, res) => {
+  try {
+    const { followerAddress, followeeAddress } = req.body;
+    const response = await userService.followUser(followerAddress, followeeAddress);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const unfollow = async (req, res) => {
+  try {
+    const { followerAddress, followeeAddress } = req.body;
+    const response = await userService.unfollowUser(followerAddress, followeeAddress);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
