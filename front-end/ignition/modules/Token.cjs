@@ -3,8 +3,8 @@
 
 const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
 
-const DeployModule = buildModule('Token1', (m) => {
-  const marketPlace = m.contract("SudokuMarketplace");
+const DeployModule = buildModule('Token2', (m) => {
+  const marketPlace = m.contract("SudokuMarketplacetest");
   return marketPlace;
 });
 

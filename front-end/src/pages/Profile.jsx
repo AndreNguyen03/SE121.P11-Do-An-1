@@ -1,23 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import Header from '../components/reuse-component/Header';
-import { fetchUserNFTs } from '../utils/blockchain';
+import { fetchUserNFTs, isOwner, withdrawFunds, setMintFee } from '../utils/blockchain';
 import { useWalletContext } from '../context/WalletContext';
 import NFTDetailList from './NFTDetailList';
 import NFTCardProfile from '../components/reuse-component/NFTCardProfile';
 import { FaSpinner } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import { setNfts, setLoading } from '../store/profileNftSlice'; // Import actions
 
 function Profile() {
   const { account, user, connectWallet } = useWalletContext();
   const [isModalDetailOpen, setIsModalDetailOpen] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState(null);
-  const dispatch = useDispatch();
-  
-  // Lấy giá trị từ Redux store
-  const { nfts, loading } = useSelector((state) => state.profileNft);
-  
+  const [isOwnerAccount, setIsOwnerAccount] = useState(false);
+  const [mintFeeValue, setMintFeeValue] = useState('');
+  const [nfts,setNFTs] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const handleListClick = (nft) => {
     setSelectedNFT(nft);
     setIsModalDetailOpen(true);
@@ -31,22 +29,49 @@ function Profile() {
     if (account) {
       async function fetchNFTs() {
         try {
-          dispatch(setLoading(true)); // Bắt đầu loading
+          setLoading(true);
           const nfts = await fetchUserNFTs(account);
-          dispatch(setNfts(nfts)); // Lưu nfts vào Redux
+          setNFTs(nfts);
         } catch (error) {
           console.error("Error fetching NFTs: ", error);
         } finally {
-          dispatch(setLoading(false)); // Dừng loading
+          setLoading(false);
         }
       }
 
+      async function checkIfOwner() {
+        const isOwnerFlag = await isOwner(account);
+        setIsOwnerAccount(isOwnerFlag);
+      }
+
       fetchNFTs();
+      checkIfOwner();
     }
-  }, [account, dispatch]);
+  }, [account]);
 
   const listedNFTs = nfts.filter((nft) => nft.isListed);
   const unlistedNFTs = nfts.filter((nft) => !nft.isListed);
+  const totalValue = nfts.reduce((acc, nft) => acc + parseFloat(nft.price || 0), 0);
+
+  const handleWithdraw = async () => {
+    try {
+      await withdrawFunds();
+      alert('Funds withdrawn successfully');
+    } catch (error) {
+      console.error("Error withdrawing funds:", error);
+      alert('Error withdrawing funds');
+    }
+  };
+
+  const handleSetMintFee = async () => {
+    try {
+      await setMintFee(mintFeeValue);
+      alert(`Mint fee updated to ${mintFeeValue} ETH`);
+    } catch (error) {
+      console.error("Error setting mint fee:", error);
+      alert('Error setting mint fee');
+    }
+  };
 
   if (!account) {
     return (
@@ -84,6 +109,47 @@ function Profile() {
             <h2 className="text-2xl font-bold text-gray-800">{user?.name}</h2>
             <p className="text-gray-500 text-lg mt-3">Wallet Address: {account}</p>
           </div>
+
+          {/* Nếu là chủ sở hữu */}
+          {isOwnerAccount && (
+            <div className="owner-section my-10 p-6 bg-gray-100 rounded-md shadow-md">
+              <h2 className="text-xl font-bold mb-4">Owner Actions</h2>
+              <button
+                onClick={handleWithdraw}
+                className="bg-red-500 text-white px-4 py-2 rounded-md mb-4"
+              >
+                Withdraw Funds
+              </button>
+              <div>
+                <input
+                  type="number"
+                  placeholder="New Mint Fee (ETH)"
+                  className="border rounded-md p-2 mr-2"
+                  onChange={(e) => setMintFeeValue(e.target.value)}
+                />
+                <button
+                  onClick={handleSetMintFee}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                >
+                  Set Mint Fee
+                </button>
+              </div>
+              <div className="user-info my-6">
+              <h2 className="text-xl font-bold text-gray-800">Profile Summary</h2>
+              <p>Total NFTs: {nfts.length}</p>
+              <p>Total Value: {totalValue.toFixed(6)} ETH</p>
+            </div>
+            </div>
+          )}
+
+          {/* Nếu không phải chủ sở hữu */}
+          {!isOwnerAccount && (
+            <div className="user-info my-6">
+              <h2 className="text-xl font-bold text-gray-800">Profile Summary</h2>
+              <p>Total NFTs: {nfts.length}</p>
+              <p>Total Value: {totalValue.toFixed(6)} ETH</p>
+            </div>
+          )}
 
           {/* Unlisted NFTs */}
           <Header textColor={'text-black'}>Unlisted NFTs</Header>

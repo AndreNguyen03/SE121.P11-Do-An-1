@@ -8,7 +8,7 @@ export const SudokuProvider = ({children}) => {
         time: 0,
         completed: false
     });
-
+    
     return (
         <SudokuContext.Provider value={{sudokuInfo, setSudokuInfo}}>
             {children}
