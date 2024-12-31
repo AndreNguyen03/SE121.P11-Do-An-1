@@ -1,12 +1,12 @@
 import { ethers } from "ethers";
-import contractABI from '../../ignition/deployments/chain-11155111/artifacts/SudokuMarketplace.json'
+import contractABI from '../../ignition/deployments/chain-11155111/artifacts/SudokuMarketplacetest.json'
 import { fetchImageFromIPFS } from ".";
 import axiosInstance from "./axiosInstance";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
 // Thông tin hợp đồng và ABI
-const contractAddress = "0x9d06485D66B3727a1D0674862c3Fe39842D7Bba7"; // Địa chỉ hợp đồng của bạn
+const contractAddress = "0xB7302B5eD3769Fd4A5AAd64EE10435Da71bcB003"; // Địa chỉ hợp đồng của bạn
 
 const provider = new ethers.JsonRpcProvider(API_URL);
 
@@ -15,29 +15,25 @@ const contract = new ethers.Contract(contractAddress, contractABI.abi, provider)
 
 export const mintNFTOnBlockchain = async (metadataURI) => {
   // Kết nối với provider và hợp đồng
-
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
-
-  // Lấy phí mint từ hợp đồng
-  const mintFee = await contract.getMintFee();
-  console.log("Phí mint: ", mintFee, "ETH");
-
   try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
+
+
+
+  
     // Gọi hàm mintNFT từ hợp đồng
-    const tx = await contract.mintNFT(metadataURI, {
-      value: mintFee // Thanh toán phí mint
-    });
+    const tx = await contract.mintAfterGame(metadataURI);
 
-    console.log("Đang gửi giao dịch...", tx.hash);
-
-    // Chờ giao dịch được xác nhận
+    console.log("Đang thực hiện giao dịch, vui lòng chờ...");
     await tx.wait();
 
-    console.log("NFT đã được mint thành công! Giao dịch hash:", tx.hash);
+    console.log("Mint NFT thành công!", tx);
+    return { success: true, transaction: tx };
   } catch (error) {
-    console.error("Có lỗi khi mint NFT:", error);
+    console.error("Lỗi khi thực hiện mint NFT:", error);
+    return { success: false, error };
   }
 };
 
@@ -333,3 +329,90 @@ export const estimateGasForPurchase = async (tokenId, account) => {
     alert('Không thể ước tính gas');
   }
 };
+
+export const isOwner = async (userAddress) => {
+  try {
+    const owner = await contract.owner();
+    return owner.toLowerCase() === userAddress.toLowerCase();
+  } catch (error) {
+    console.error("Error fetching owner:", error);
+    return false;
+  }
+};
+
+export const withdrawFunds = async () => {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contractWithSigner = contract.connect(signer);
+
+    const tx = await contractWithSigner.withdraw();
+    await tx.wait();
+    console.log("Funds withdrawn successfully");
+  } catch (error) {
+    console.error("Error withdrawing funds:", error);
+    throw error;
+  }
+};
+
+export const setMintFee = async (newFee) => {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contractWithSigner = contract.connect(signer);
+
+    const tx = await contractWithSigner.setMintFee(ethers.parseEther(newFee.toString()));
+    await tx.wait();
+    console.log(`Mint fee set to ${newFee} ETH`);
+  } catch (error) {
+    console.error("Error setting mint fee:", error);
+    throw error;
+  }
+};
+export const payToPlay = async () => {
+  try {
+    // Kết nối với ví người dùng qua BrowserProvider
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
+
+    // Lấy phí chơi game từ smart contract
+    const playFee = await contract.getGameFee();
+    console.log("Phí chơi game:", ethers.formatEther(playFee), "ETH");
+
+    // Thực hiện giao dịch thanh toán phí chơi game
+    const tx = await contract.startGame({
+      value: playFee, // Thanh toán phí
+    });
+
+    console.log("Đang gửi giao dịch...", tx.hash);
+
+    // Chờ giao dịch được xác nhận
+    await tx.wait();
+
+    console.log("Phí chơi game đã được thanh toán thành công! Giao dịch hash:", tx.hash);
+
+    return { success: true, transactionHash: tx.hash };
+  } catch (error) {
+    console.error("Lỗi khi thanh toán phí chơi game:", error);
+    return { success: false, error };
+  }
+};
+export const getGameFee = async () => {
+  try {
+    // Kết nối với ví người dùng qua BrowserProvider
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
+
+    // Lấy phí chơi game từ smart contract
+    const playFee = await contract.getGameFee();
+    console.log("Phí chơi game:", ethers.formatEther(playFee), "ETH");
+    return ethers.formatEther(playFee); 
+
+   
+  } catch (error) {
+    console.error("Lỗi khi lấy phí chơi game:", error);
+    return { success: false, error };
+  }
+}

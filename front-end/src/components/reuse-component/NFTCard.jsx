@@ -1,29 +1,61 @@
-import React from 'react'
-import Button from './Button'
-import dfinity from "../../assets/dfinity.svg";
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-function NFTCard({nft, onClick}) {
+
+const NFTCard = ({ nft, onBuy }) => {
+  const { image, name, price, discountedPrice, onSale, tokenId, stock } = nft;
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate(`/nft/${nft.tokenId}`, { state: { nft } }); // Điều hướng đến NFTDetail với id
+    navigate(`/nft/${tokenId}`);
   };
-  return (
-    <div onClick={handleCardClick} className="cursor-pointer w-[250px] h-[350px] rounded overflow-hidden m-2 bg-[#d8dfe7a5] text-white mx-auto shadow shadow-blue-500 transform hover:-translate-y-1 hover:scale-105 transition-transform duration-200 ease-in-out">
-    <img className="w-full h-auto object-cover" src={nft.metadata.image} alt={nft.metadata.name} loading="lazy" />
-    <div className="p-2 pb-4 space-y-2">
-      <h1 className="font-bold text-md text-blue-700">{nft.metadata.name}</h1>
-      <p className='text-black'>Price :</p>
-      <div className='flex justify-between items-center'>
-        <div className='flex items-center gap-2'>
-          <img src={dfinity} alt="" className='w-6' />
-          <p className="text-sm text-black"><strong> {nft.price} SepoliaETH</strong></p>
-        </div>
-        {!nft.isListed  && <Button bg="bg-blue-800" textColor="text-white" btnText={"List"} className="min-w-fit px-6 text-sm" onClick={onClick}/>}
-      </div>
-    </div>
-  </div>
-  )
-}
 
-export default NFTCard
+  return (
+    <div className="relative border p-4 rounded-lg shadow-lg hover:shadow-xl bg-white">
+      {/* Sale Label */}
+      {onSale && (
+        <span className="absolute top-2 left-2 bg-black text-white text-sm px-2 py-1 rounded-md">
+          Sale!
+        </span>
+      )}
+
+      {/* NFT Image */}
+      <img
+        src={image}
+        alt={name}
+        className="w-full h-40 object-cover rounded-lg mb-4 cursor-pointer"
+        onClick={handleCardClick}
+      />
+
+      {/* NFT Details */}
+      <h3
+        className="text-lg font-bold mb-2 cursor-pointer"
+        onClick={handleCardClick}
+      >
+        {name}
+      </h3>
+      <div className="text-gray-600">
+        {discountedPrice ? (
+          <>
+            <span className="line-through text-red-500">${price}</span>{' '}
+            <span className="text-green-600 font-semibold">${discountedPrice}</span>
+          </>
+        ) : (
+          <span className="font-semibold">${price}</span>
+        )}
+      </div>
+      {!stock && <span className="text-sm text-red-500 mt-2 block">Out of Stock</span>}
+
+      {/* Buy Button */}
+      {stock && (
+        <button
+          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700"
+          onClick={onBuy}
+        >
+          Buy
+        </button>
+      )}
+    </div>
+  );
+};
+
+export default NFTCard;
