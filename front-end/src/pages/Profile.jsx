@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import Header from '../components/reuse-component/Header';
-import { fetchUserNFTs } from '../utils/blockchain';
+import { fetchUserNFTs, isOwner, withdrawFunds, setGameFee } from '../utils/blockchain';
 import { useWalletContext } from '../context/WalletContext';
 import NFTDetailList from './NFTDetailList';
 import NFTCardProfile from '../components/reuse-component/NFTCardProfile';
 import { FaSpinner } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
-import { setNfts, setLoading } from '../store/profileNftSlice'; // Import actions
+import Button from '../components/reuse-component/Button';
 
 function Profile() {
   const { account, user, connectWallet } = useWalletContext();
   const [isModalDetailOpen, setIsModalDetailOpen] = useState(false);
   const [selectedNFT, setSelectedNFT] = useState(null);
-  const dispatch = useDispatch();
-  
-  // Lấy giá trị từ Redux store
-  const { nfts, loading } = useSelector((state) => state.profileNft);
-  
+  const [isOwnerAccount, setIsOwnerAccount] = useState(false);
+  const [mintFeeValue, setMintFeeValue] = useState('');
+  const [nfts, setNFTs] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const handleListClick = (nft) => {
     setSelectedNFT(nft);
     setIsModalDetailOpen(true);
@@ -31,36 +30,62 @@ function Profile() {
     if (account) {
       async function fetchNFTs() {
         try {
-          dispatch(setLoading(true)); // Bắt đầu loading
+          setLoading(true);
           const nfts = await fetchUserNFTs(account);
-          dispatch(setNfts(nfts)); // Lưu nfts vào Redux
+          setNFTs(nfts);
         } catch (error) {
           console.error("Error fetching NFTs: ", error);
         } finally {
-          dispatch(setLoading(false)); // Dừng loading
+          setLoading(false);
         }
       }
 
+      async function checkIfOwner() {
+        const isOwnerFlag = await isOwner(account);
+        setIsOwnerAccount(isOwnerFlag);
+      }
+
       fetchNFTs();
+      checkIfOwner();
     }
-  }, [account, dispatch]);
+  }, [account]);
 
   const listedNFTs = nfts.filter((nft) => nft.isListed);
   const unlistedNFTs = nfts.filter((nft) => !nft.isListed);
+  const totalValue = nfts.reduce((acc, nft) => acc + parseFloat(nft.price || 0), 0);
+
+  const handleWithdraw = async () => {
+    try {
+      await withdrawFunds();
+      alert('Funds withdrawn successfully');
+    } catch (error) {
+      console.error("Error withdrawing funds:", error);
+      alert('Error withdrawing funds');
+    }
+  };
+
+  const handleSetMintFee = async () => {
+    try {
+      await setGameFee(mintFeeValue);
+      alert(`Mint fee updated to ${mintFeeValue} ETH`);
+    } catch (error) {
+      console.error("Error setting mint fee:", error);
+      alert('Error setting mint fee');
+    }
+  };
 
   if (!account) {
     return (
-      <Layout>
-        <div className="flex justify-center items-center h-full">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Please connect your wallet to view Profile</h2>
-            <button
-              className="bg-blue-500 text-white p-2 rounded-lg"
-              onClick={connectWallet}
-            >
-              Connect Wallet
-            </button>
-          </div>
+      <Layout className={"flex justify-center items-center gap-5 flex-col"}>
+        <div className="text-center p-6 max-w-lg bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-bold mb-4">Connect your wallet to start</h2>
+          <Button
+            btnText={"Connect Wallet"}
+            bg={"bg-blue-500"}
+            textColor={"text-white"}
+            className={"px-10 py-3"}
+            onClick={connectWallet}
+          />
         </div>
       </Layout>
     );
@@ -84,6 +109,54 @@ function Profile() {
             <h2 className="text-2xl font-bold text-gray-800">{user?.name}</h2>
             <p className="text-gray-500 text-lg mt-3">Wallet Address: {account}</p>
           </div>
+
+          <div className="dashboard-container mb-10 p-6 bg-gray-50 rounded-md shadow-lg">
+            {/* Thông tin chung dành cho tất cả người dùng */}
+            <div className="summary-section my-10 bg-blue-200 p-6 rounded-lg shadow-md text-center">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Dashboard Overview</h2>
+              <div className="flex justify-center items-center gap-10">
+                <div className="text-center">
+                  <p className="text-xl font-semibold text-gray-600">Total NFTs</p>
+                  <p className="text-4xl font-bold text-blue-700">{nfts.length}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-semibold text-gray-600">Total Value</p>
+                  <p className="text-4xl font-bold text-blue-700">{totalValue.toFixed(6)} ETH</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Chỉ hiển thị phần Owner Actions nếu là tài khoản của chủ sở hữu */}
+            {isOwnerAccount && (
+              <div className="owner-section my-10 p-8 bg-gray-100 rounded-lg shadow-md">
+                <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Owner Dashboard</h2>
+                <div className="actions-section">
+                  <h3 className="text-xl font-bold mb-4 text-gray-700">Owner Actions</h3>
+                  <button
+                    onClick={handleWithdraw}
+                    className="w-full bg-red-500 text-white px-6 py-4 rounded-md mb-6 text-lg shadow hover:bg-red-600"
+                  >
+                    Withdraw Funds
+                  </button>
+                  <div className="set-mint-fee flex flex-wrap items-center gap-4">
+                    <input
+                      type="number"
+                      placeholder="New Mint Fee (ETH)"
+                      className="flex-grow border rounded-md p-4 text-lg shadow"
+                      onChange={(e) => setMintFeeValue(e.target.value)}
+                    />
+                    <button
+                      onClick={handleSetMintFee}
+                      className="bg-blue-500 text-white px-6 py-4 rounded-md text-lg shadow hover:bg-blue-600"
+                    >
+                      Set Game Fee
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
 
           {/* Unlisted NFTs */}
           <Header textColor={'text-black'}>Unlisted NFTs</Header>

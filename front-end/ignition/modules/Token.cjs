@@ -3,8 +3,9 @@
 
 const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
 
-const DeployModule = buildModule('Token1', (m) => {
-  const marketPlace = m.contract("SudokuMarketplace");
+const DeployModule = buildModule('TokenTest', (m) => {
+  const nftAddress = "0x84f1f012e39076CCCc9A4533827fAD7455529c37"
+  const marketPlace = m.contract("Marketplace", [nftAddress]);
   return marketPlace;
 });
 

@@ -2,7 +2,7 @@ import React from 'react'
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from 'react-slick';
-import NFTCard from '../reuse-component/NFTCard';
+import NFTCardLandingPage from '../reuse-component/NFTCardLandingPage';
 import { nfts } from '../../utils';
 
 function TrendingNFTs() {
@@ -44,7 +44,8 @@ function TrendingNFTs() {
         <Slider {...settings}>
             {nfts.map((nft) => (
                 <div key={nft.id}>
-                    <NFTCard
+                    <NFTCardLandingPage
+                        onClick={() => console.log(`22`)}
                         nft={{
                             metadata: {
                                 image: nft.image,

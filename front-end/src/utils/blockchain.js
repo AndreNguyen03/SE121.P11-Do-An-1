@@ -1,12 +1,12 @@
 import { ethers } from "ethers";
-import contractABI from '../../ignition/deployments/chain-11155111/artifacts/SudokuMarketplace.json'
+import contractABI from '../../ignition/deployments/chain-11155111/artifacts/SudokuMarketplacetest.json'
 import { fetchImageFromIPFS } from ".";
 import axiosInstance from "./axiosInstance";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
 // Thông tin hợp đồng và ABI
-const contractAddress = "0x9d06485D66B3727a1D0674862c3Fe39842D7Bba7"; // Địa chỉ hợp đồng của bạn
+const contractAddress = "0x504433cbBD5ED6fa483E9A36276538f1bb35271D"; // Địa chỉ hợp đồng của bạn
 
 const provider = new ethers.JsonRpcProvider(API_URL);
 
@@ -21,14 +21,10 @@ export const mintNFTOnBlockchain = async (metadataURI) => {
   const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
 
   // Lấy phí mint từ hợp đồng
-  const mintFee = await contract.getMintFee();
-  console.log("Phí mint: ", mintFee, "ETH");
 
   try {
     // Gọi hàm mintNFT từ hợp đồng
-    const tx = await contract.mintNFT(metadataURI, {
-      value: mintFee // Thanh toán phí mint
-    });
+    const tx = await contract.mintAfterGame(metadataURI);
 
     console.log("Đang gửi giao dịch...", tx.hash);
 
@@ -122,10 +118,10 @@ export async function fetchUserNFTs(userAddress) {
       const tokenURI = await contract.tokenURI(nft.tokenId);
       console.log(tokenURI);
 
-      const response = await axiosInstance.get(`ipfs/${tokenURI}`);
+      const response = await axiosInstance.get(`/ipfs/${tokenURI}`);
       const metadata = await response.data;
-      metadata.ipfsImage = metadata.image ;
-      metadata.image = await fetchImageFromIPFS(metadata.image);
+      // metadata.ipfsImage = metadata.image ;
+      // metadata.image = await fetchImageFromIPFS(metadata.image);
       console.log(metadata)
       return {
         tokenId: nft.tokenId.toString(),               // Chuyển tokenId thành chuỗi
@@ -171,7 +167,7 @@ export async function fetchNFTById(tokenId) {
     const nft = await contract.getNFTById(tokenId);
     console.log("NFT Info: ", nft);
     const tokenURI = await contract.tokenURI(nft.tokenId);
-    const response = await axiosInstance.get(`ipfs/${tokenURI}`);
+    const response = await axiosInstance.get(`/ipfs/${tokenURI}`);
     const metadata = await response.data;
     metadata.ipfsImage = metadata.image ;
     metadata.image = await fetchImageFromIPFS(metadata.image);
@@ -331,5 +327,95 @@ export const estimateGasForPurchase = async (tokenId, account) => {
   } catch (error) {
     console.error('Lỗi ước tính gas:', error);
     alert('Không thể ước tính gas');
+  }
+};
+
+export const payEntryFee = async () => {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
+
+  try {
+    // Lấy phí đăng nhập từ hợp đồng
+    const entryFee = await contract.getGameFee();
+    console.log("Phí vào game: ", entryFee, "ETH");
+
+    // Thực hiện thanh toán phí để vào game
+    const tx = await contract.startGame({
+      value: entryFee
+    });
+
+    console.log("Đang gửi giao dịch vào game...", tx.hash);
+
+    // Đợi giao dịch xác nhận
+    await tx.wait();
+
+    console.log("Phí vào game đã được thanh toán thành công!");
+    return true; // Trả về true nếu phí được thanh toán thành công
+  } catch (error) {
+    console.error("Có lỗi khi thanh toán phí vào game:", error);
+    return false; // Trả về false nếu có lỗi
+  }
+};
+
+
+// Hàm lấy phí chơi game từ hợp đồng
+export const getGameFee = async () => {
+  const provider = new ethers.BrowserProvider(window.ethereum); // Dùng BrowserProvider để kết nối với MetaMask
+  const signer = await provider.getSigner();
+  const contract = new ethers.Contract(contractAddress, contractABI.abi, signer);
+
+  try {
+    // Gọi hàm getGameFee từ hợp đồng để lấy phí
+    const fee = await contract.getGameFee();
+
+    // Chuyển đổi phí từ Wei sang Ether
+    const feeInEther = ethers.formatEther(fee);
+    console.log("Phí vào game: ", feeInEther, "ETH");
+
+    return feeInEther; // Trả về phí vào game dưới dạng Ether
+  } catch (error) {
+    console.error("Lỗi khi lấy phí vào game:", error);
+    return null;
+  }
+};
+
+export const isOwner = async (userAddress) => {
+  try {
+    const owner = await contract.owner();
+    return owner.toLowerCase() === userAddress.toLowerCase();
+  } catch (error) {
+    console.error("Error fetching owner:", error);
+    return false;
+  }
+};
+
+export const setGameFee = async (newFee) => {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contractWithSigner = contract.connect(signer);
+
+    const tx = await contractWithSigner.setGameFee(ethers.parseEther(newFee.toString()));
+    await tx.wait();
+    console.log(`Mint fee set to ${newFee} ETH`);
+  } catch (error) {
+    console.error("Error setting mint fee:", error);
+    throw error;
+  }
+};
+
+export const withdrawFunds = async () => {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contractWithSigner = contract.connect(signer);
+
+    const tx = await contractWithSigner.withdrawFunds();
+    await tx.wait();
+    console.log("Funds withdrawn successfully");
+  } catch (error) {
+    console.error("Error withdrawing funds:", error);
+    throw error;
   }
 };
