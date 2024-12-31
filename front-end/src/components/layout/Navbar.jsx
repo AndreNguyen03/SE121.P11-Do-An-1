@@ -33,8 +33,8 @@ function Navbar() {
       </Link>
       <div>
         <div className='text-black hidden lg:flex gap-10 items-center font-medium'>
-          <Link to="/discovery">Discovery</Link>
-          <Link to="/mint">Mint</Link>
+          <Link to="/Explore">Explore</Link>
+          <Link to="/Create">Create</Link>
           <Link to="/profile">Profile</Link>
           {isConnected && <NotificationBell />}
           {isConnected ? (
