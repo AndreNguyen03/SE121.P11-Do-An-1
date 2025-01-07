@@ -64,3 +64,91 @@ export const getUserNFTs = async (userAddress, signer) => {
     throw new Error("Không thể lấy NFT của người dùng.");
   }
 };
+
+
+// Hàm niêm yết item
+export async function listItem(tokenId, price, signer) {
+  if (!signer) {
+    throw new Error("Signer không tồn tại!");
+  }
+
+  const contract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, signer);
+  
+  try {
+    const tx = await contract.listItem(tokenId, price);
+    console.log("Listing thành công! Đang chờ xác nhận:", tx.hash);
+
+    // Chờ giao dịch hoàn tất
+    const receipt = await tx.wait();
+    console.log("Listing hoàn tất! Transaction Hash:", receipt);
+    alert(`Item được niêm yết thành công! Token ID: ${tokenId}`);
+    return receipt;
+  } catch (err) {
+    console.error("Listing thất bại:", err);
+    alert("Listing thất bại! Vui lòng thử lại.");
+  }
+}
+
+// Hàm mua item
+export async function buyItem(tokenId, signer, value) {
+  if (!signer) {
+    throw new Error("Signer không tồn tại!");
+  }
+
+  const contract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, signer);
+  
+  try {
+    const tx = await contract.buyItem(tokenId, { value });
+    console.log("Mua NFT thành công! Đang chờ xác nhận:", tx.hash);
+
+    // Chờ giao dịch hoàn tất
+    const receipt = await tx.wait();
+    console.log("Mua hoàn tất! Transaction Hash:", receipt);
+    alert(`Mua thành công! Token ID: ${tokenId}`);
+    return receipt;
+  } catch (err) {
+    console.error("Mua thất bại:", err);
+    alert("Mua thất bại! Vui lòng thử lại.");
+  }
+}
+
+// Hàm hủy listing
+export async function cancelListing(tokenId, signer) {
+  if (!signer) {
+    throw new Error("Signer không tồn tại!");
+  }
+
+  const contract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, signer);
+
+  try {
+    const tx = await contract.cancelListing(tokenId);
+    console.log("Hủy listing thành công! Đang chờ xác nhận:", tx.hash);
+
+    // Chờ giao dịch hoàn tất
+    const receipt = await tx.wait();
+    console.log("Hủy listing hoàn tất! Transaction Hash:", receipt);
+    alert(`Hủy listing thành công! Token ID: ${tokenId}`);
+    return receipt;
+  } catch (err) {
+    console.error("Hủy listing thất bại:", err);
+    alert("Hủy listing thất bại! Vui lòng thử lại.");
+  }
+}
+
+// Hàm lấy tất cả các item đang được niêm yết
+export const getAllListedItems = async () => {
+  try {
+    const contract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, provider);
+    const [tokenIds, prices] = await contract.getAllListedItems();
+
+    const items = tokenIds.map((tokenId, index) => ({
+      tokenId,
+      price: ethers.formatEther(prices[index]), // Chuyển đổi từ Wei sang Ether nếu cần
+    }));
+
+    return items;
+  } catch (err) {
+    console.error("Lỗi khi lấy các item đang niêm yết:", err);
+    throw new Error("Không thể lấy các item đang niêm yết.");
+  }
+};
