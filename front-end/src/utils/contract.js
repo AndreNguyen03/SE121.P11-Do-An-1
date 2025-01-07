@@ -38,33 +38,6 @@ export async function mintNFT(userAddress, signer) {
   }
 }
 
-export const getUserNFTs = async (userAddress, signer) => {
-  if (!signer) {
-    throw new Error("Signer không tồn tại!");
-  }
-
-  const contractNFT = new ethers.Contract(contractAddressNFT, contractABINFT.abi, signer);
-
-  try {
-    const balance = await contractNFT.balanceOf(userAddress);
-    const userNFTs = [];
-
-    // Lấy thông tin các token mà người dùng sở hữu
-    for (let tokenId = 0; tokenId < balance; tokenId++) {
-      const owner = await contractNFT.ownerOf(tokenId);
-      if (owner.toLowerCase() === userAddress.toLowerCase()) {
-        const tokenURI = await contractNFT.tokenURI(tokenId);
-        userNFTs.push({ tokenId, tokenURI });
-      }
-    }
-
-    return userNFTs;
-  } catch (err) {
-    console.error("Lỗi khi lấy NFT:", err);
-    throw new Error("Không thể lấy NFT của người dùng.");
-  }
-};
-
 
 // Hàm niêm yết item
 export async function listItem(tokenId, price, signer) {
@@ -150,5 +123,17 @@ export const getAllListedItems = async () => {
   } catch (err) {
     console.error("Lỗi khi lấy các item đang niêm yết:", err);
     throw new Error("Không thể lấy các item đang niêm yết.");
+  }
+};
+
+// Fetch metadata từ tokenURI
+const fetchMetadata = async (tokenURI) => {
+  try {
+    const response = await fetch(tokenURI);
+    if (!response.ok) throw new Error(`Failed to fetch metadata from ${tokenURI}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Lỗi khi fetch metadata:", error);
+    return null;
   }
 };

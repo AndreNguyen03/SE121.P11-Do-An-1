@@ -6,8 +6,11 @@ import bodyParser from "body-parser";
 import userRoutes from './routes/user.routes.js'
 import ipfsRoutes from './routes/ipfs.routes.js'
 import notiRoutes from './routes/notification.routes.js'
+import nftRoutes from './routes/nft.routes.js'
+import { listenToTransfers } from "./listeners/nftListener.js";
 import path from 'path';
 import url from 'url';
+
 
 // app config
 const app = express();
@@ -35,6 +38,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/users', userRoutes); // Gắn route vào app
 app.use('/api/ipfs', ipfsRoutes);
 app.use('/api/notifications', notiRoutes);
+app.use('/api/nft', nftRoutes);
+
+listenToTransfers();
 
 // db connetion
 Database.getInstance();

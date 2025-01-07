@@ -1,0 +1,65 @@
+import React from 'react';
+
+function ApproveListingModal({ isOpen, onClose, item }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="bg-white w-100 p-6 rounded-lg shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">Approve collection</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="flex items-center my-8">
+          <img
+            src="https://via.placeholder.com/50" // Placeholder image
+            alt="Collection"
+            className="w-16 h-16 rounded-lg mr-4"
+          />
+          <div>
+            <p className="text-gray-800 font-medium">{item.name || 'Unnamed Item'}</p>
+            <p className="text-gray-600 text-sm">{item.collection || 'Unknown Collection'}</p>
+            <p className="text-gray-500 text-sm">Chain: {item.chain || 'Unknown'}</p>
+          </div>
+          <div className="ml-auto text-right">
+            <p className="text-gray-800 font-bold">{item.price || '0.000'} ETH</p>
+            <p className="text-gray-600 text-sm">${item.usdPrice || '0.00'}</p>
+          </div>
+        </div>
+
+        <hr className='mb-4'></hr>
+
+        <p className="text-gray-600 text-sm mb-4 font-bold">
+          Go to your wallet
+        </p>
+        <p className="text-gray-500 text-sm">
+          You’ll be asked to approve this collection from your wallet. You only need to approve each collection once.
+        </p>
+        <button
+          onClick={onClose}
+          className="mt-6 w-full bg-cyan-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        >
+          Approve in Wallet
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default ApproveListingModal;

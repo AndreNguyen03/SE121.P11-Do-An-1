@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useWalletContext } from '../../context/WalletContext';
 
 const NFTCard = ({ nft, onBuy }) => {
   const { image, name, price, discountedPrice, onSale, tokenId, stock } = nft;
+  const {account} = useWalletContext();
   const navigate = useNavigate();
 
   const handleCardClick = () => {

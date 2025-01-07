@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import NFTCard from '../components/reuse-component/NFTCard';
 import nft1 from '../assets/1.png'
@@ -6,6 +6,8 @@ import nft2 from '../assets/2.png'
 import nft3 from '../assets/3.png'
 import nft5 from '../assets/5.png'
 import avatar3 from '../assets/avatar3.jpg'
+import { useWalletContext } from '../context/WalletContext';
+import axiosInstance from '../utils/axiosInstance';
 
 const Profile = () => {
   const fakeUser = {
@@ -78,6 +80,23 @@ const Profile = () => {
     );
     alert(`NFT #${tokenId} has been listed successfully!`);
   };
+
+  const {account, signer} = useWalletContext();
+
+  useEffect(() => {
+    try {
+      
+      async function fetchUserNfts() {
+        const response = await axiosInstance.get(`/nft/user-nfts/${account}`);
+        const userNFTs = response.data;
+        console.log(userNFTs);
+      }
+
+      fetchUserNfts()
+    } catch (error) {
+      console.log(error);
+    }
+  },[account])
 
   return (
     <Layout>
