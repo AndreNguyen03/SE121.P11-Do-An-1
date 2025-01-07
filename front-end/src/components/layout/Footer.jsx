@@ -8,8 +8,8 @@ function Footer() {
         <div className='lg:w-96'>
           <Link to="/">
             <h1 className="text-lg font-bold text-white">
-            <span className='bg-gradient-to-r from-lime-500 to-blue-400 bg-clip-text text-transparent'>Sudoku</span> 
             <span className='ml-1'>NFT</span>
+            <span className='bg-gradient-to-r from-lime-500 to-blue-400 bg-clip-text text-transparent'>Marketplace</span> 
             </h1>
           </Link>
 
@@ -17,7 +17,7 @@ function Footer() {
             Buy, sell, and trade NFTs securely with our innovative platform.</p>
         </div>
         <div className="flex justify-center lg:justify-start space-x-4 text-white font-medium mt-6 lg:mt-0">
-          <Link to="/discovery">Discovery</Link>
+          <Link to="/explore">Explore</Link>
           <Link to="/mint">Mint</Link>
           <Link to="/profile">Profile</Link>
         </div>

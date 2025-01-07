@@ -4,7 +4,6 @@ import Modal from "react-modal";
 import Layout from "../components/layout/Layout";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useWalletContext } from "../context/WalletContext";
-import { buyNFT, estimateGasForPurchase } from "../utils/blockchain";
 
 // Cấu hình mặc định cho Modal
 Modal.setAppElement("#root");

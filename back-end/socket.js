@@ -1,6 +1,5 @@
 import { Server } from 'socket.io';
 import * as notificationService from './services/notification.service.js';
-import user from './models/user.model.js';
 
 const setupSocket = (httpServer) => {
   const io = new Server(httpServer, {

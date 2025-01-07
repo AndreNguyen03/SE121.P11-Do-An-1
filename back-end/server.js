@@ -10,5 +10,3 @@ const PORT = process.env.PORT || 3055;
 server.listen(PORT, () => {
   console.log(`server start with ${PORT}`);
 });
-
-server.setTimeout(60000);

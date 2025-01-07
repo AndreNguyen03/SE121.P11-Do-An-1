@@ -1,35 +1,40 @@
 import React, { useState } from 'react';
 import Layout from '../components/layout/Layout';
 import NFTCard from '../components/reuse-component/NFTCard';
+import nft1 from '../assets/1.png'
+import nft2 from '../assets/2.png'
+import nft3 from '../assets/3.png'
+import nft5 from '../assets/5.png'
+import avatar3 from '../assets/avatar3.jpg'
 
 const Profile = () => {
   const fakeUser = {
-    name: 'Unnamed',
-    image: null,
+    name: 'John Doe',
+    image: avatar3,
     wallet: '0x2Db2...0B43',
     joined: 'December 2024',
   };
 
-  const tabs = ['Collected', 'Offers made', 'Deals', 'Created', 'Favorited', 'Activity'];
+  const tabs = ['Owned', 'On sale', 'Created', 'Favorited', 'Activity'];
 
-  // Fake Data
+  // Fake Data  
   const initialNFTs = [
-    { tokenId: 1, name: 'NFT 1', isListed: true, price: 0.1 },
-    { tokenId: 2, name: 'NFT 2', isListed: false },
-    { tokenId: 3, name: 'NFT 3', isListed: true, price: 0.3 },
-    { tokenId: 4, name: 'NFT 4', isListed: false },
+    { tokenId: 1, name: 'Squish Souls #2', isListed: true, price: 0.1, image: nft1 },
+    { tokenId: 2, name: 'Squish Souls #3', isListed: false, image: nft2 },
+    { tokenId: 3, name: 'Squish Souls #4', isListed: true, price: 0.3, image: nft3 },
+    { tokenId: 4, name: 'Squish Souls #5', isListed: false, image: nft5 },
   ];
   const createdNFTs = [
     {
       tokenId: 1,
       name: 'My First NFT',
-      image: 'https://via.placeholder.com/300x300.png?text=My+First+NFT',
+      image: nft2,
       price: 0.5,
     },
     {
       tokenId: 2,
       name: 'Artistic Piece',
-      image: 'https://via.placeholder.com/300x300.png?text=Artistic+Piece',
+      image: nft3,
       price: 1,
     },
   ];
@@ -37,12 +42,12 @@ const Profile = () => {
     {
       tokenId: 3,
       name: 'Rare Collectible',
-      image: 'https://via.placeholder.com/300x300.png?text=Rare+Collectible',
+      image: nft5,
     },
     {
       tokenId: 4,
       name: 'Exclusive Item',
-      image: 'https://via.placeholder.com/300x300.png?text=Exclusive+Item',
+      image: nft3,
     },
   ];
   const offersMade = [
@@ -60,7 +65,7 @@ const Profile = () => {
     { id: 3, activity: 'Sold NFT Delta for 0.2 ETH', date: '2024-12-25' },
   ];
 
-  const [activeTab, setActiveTab] = useState('Collected');
+  const [activeTab, setActiveTab] = useState('Owned');
   const [collectedTab, setCollectedTab] = useState('Unlisted');
   const [nfts, setNFTs] = useState(initialNFTs);
 
@@ -123,8 +128,8 @@ const Profile = () => {
               <button
                 key={tab}
                 className={`py-2 px-4 font-medium ${activeTab === tab
-                    ? 'border-b-2 border-green-500 text-gray-900'
-                    : 'text-gray-500 hover:text-gray-700'
+                  ? 'border-b-2 border-green-500 text-gray-900'
+                  : 'text-gray-500 hover:text-gray-700'
                   }`}
                 onClick={() => setActiveTab(tab)}
               >
@@ -136,40 +141,15 @@ const Profile = () => {
 
         {/* Tab Content */}
         <div className="mt-6">
-          {activeTab === 'Collected' && (
+          {activeTab === 'Owned' && (
             <div>
-              {/* Sub Tabs */}
-              <div className="mt-4 flex space-x-6">
-                <button
-                  className={`py-1 px-3 rounded-lg ${collectedTab === 'Unlisted'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-300 text-gray-700 hover:text-gray-900'
-                    }`}
-                  onClick={() => setCollectedTab('Unlisted')}
-                >
-                  Unlisted
-                </button>
-                <button
-                  className={`py-1 px-3 rounded-lg ${collectedTab === 'Listed'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-300 text-gray-700 hover:text-gray-900'
-                    }`}
-                  onClick={() => setCollectedTab('Listed')}
-                >
-                  Listed
-                </button>
-              </div>
               {/* NFTs */}
-              <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
                 {nfts
-                  .filter((nft) => (collectedTab === 'Listed' ? nft.isListed : !nft.isListed))
                   .map((nft) => (
                     <NFTCard
                       key={nft.tokenId}
-                      nft={{
-                        ...nft,
-                        image: `https://via.placeholder.com/300x300.png?text=NFT+${nft.tokenId}`,
-                      }}
+                      nft={nft}
                     >
                       {!nft.isListed && (
                         <button
@@ -233,7 +213,7 @@ const Profile = () => {
           )}
 
           {activeTab === 'Created' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
               {createdNFTs.map((nft) => (
                 <NFTCard key={nft.tokenId} nft={nft} />
               ))}
@@ -241,7 +221,7 @@ const Profile = () => {
           )}
 
           {activeTab === 'Favorited' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
               {favoritedNFTs.map((nft) => (
                 <NFTCard key={nft.tokenId} nft={nft} />
               ))}

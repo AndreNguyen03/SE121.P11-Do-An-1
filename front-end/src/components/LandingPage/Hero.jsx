@@ -10,8 +10,8 @@ function Hero() {
         <TypingHeader />
         <p className='text-md lg:text-xl'>Dive to the Universe Where Creativity Meets Blockchain. Explore Exclusive NFTs, Curated Just For You</p>
         <div className='flex items-center gap-7'>
-          <Link to={'/discovery'}>
-            <Button bg={'bg-blue-700'} textColor={'text-white'} btnText={'Discover'} className={'text-xl font-bold px-8'} />
+          <Link to={'/Explore'}>
+            <Button bg={'bg-blue-700'} textColor={'text-white'} btnText={'Explore'} className={'text-xl font-bold px-8'} />
           </Link>
           <Link to={'/mint'}>
             <Button border='border border-black' textColor={'text-black'} btnText={'Mint'} className={'shadow-none text-xl font-bold'} />

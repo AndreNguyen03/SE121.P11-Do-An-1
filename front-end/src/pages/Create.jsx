@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import Layout from '../components/layout/Layout';
 import Button from '../components/reuse-component/Button';
 import { useWalletContext } from '../context/WalletContext';
+import nft1 from '../assets/1.png'
+import { getUserNFTs, mintNFT } from '../utils/contract';
 
 function Create() {
-  const { isConnected, connectWallet } = useWalletContext();
+  const { isConnected, connectWallet, account, signer } = useWalletContext();
   const [error, setError] = useState(null);
   const [step, setStep] = useState(1); // Step 1: Upload, Step 2: Metadata
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -14,167 +16,83 @@ function Create() {
     price: '',
   });
 
-  // Handle file upload
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setUploadedImage(reader.result); // Base64 image preview
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle metadata changes
-  const handleMetadataChange = (e) => {
-    const { name, value } = e.target;
-    setMetadata((prev) => ({ ...prev, [name]: value }));
-  };
-
   // Handle minting action
-  const handleMint = () => {
-    if (!uploadedImage || !metadata.name || !metadata.price) {
-      alert('Please complete all fields to mint your NFT.');
-      return;
+  const handleMint = async () => {
+    try {
+      
+      console.log(`account mint :::`, account);
+
+      const tx = await mintNFT(account,signer);
+
+      console.log(`transaction mint :::`, tx);
+
+      const userNFTs = await getUserNFTs(account,signer);
+      console.log(`userNFTs ::: `, userNFTs);
+    } catch (error) {
+      console.log(error);
     }
-    alert(`Minting NFT: ${metadata.name}\nPrice: ${metadata.price} ETH`);
-    // Reset form for demo
-    setUploadedImage(null);
-    setMetadata({ name: '', description: '', price: '' });
-    setStep(1);
+  };
+
+  const [quantity, setQuantity] = useState(2);
+  const maxMint = 10;
+
+  const increaseQuantity = () => {
+    if (quantity < maxMint) setQuantity(quantity + 1);
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) setQuantity(quantity - 1);
   };
 
   return (
     <Layout className="flex justify-center items-center flex-col">
-      {isConnected ? (
-        <div className="container mx-auto p-6">
-          <h1 className="text-4xl font-bold text-center mb-8">Create Your NFT</h1>
-          <div className="bg-white shadow-lg rounded-lg p-6">
-            {/* Step Indicator */}
-            <div className="flex justify-between items-center mb-6">
-              <span
-                className={`text-lg font-semibold px-4 py-2 rounded ${
-                  step === 1 ? 'bg-blue-500 text-white' : 'text-gray-600'
-                }`}
-              >
-                Step 1: Upload
-              </span>
-              <span
-                className={`text-lg font-semibold px-4 py-2 rounded ${
-                  step === 2 ? 'bg-blue-500 text-white' : 'text-gray-600'
-                }`}
-              >
-                Step 2: Metadata
+      <div className="flex flex-col gap-7 items-center justify-around rounded-sm min-h-[800px]">
+        <h2 className='text-6xl mt-[50px]'>FreeMint is Live</h2>
+
+        <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col md:flex-row items-center max-w-[1000px] w-full mb-[70px]">
+          {/* Left Section: Image */}
+          <div className="w-full md:w-1/2 flex justify-center">
+            <div className="relative">
+              <img
+                src={nft1} // Replace with your NFT image URL
+                alt="NFT Preview"
+                className="rounded-lg w-full h-auto"
+              />
+              <span className="absolute top-2 left-2 bg-black bg-opacity-80 text-white px-3 py-1 text-lg rounded-md">
+                96 / 100
               </span>
             </div>
+          </div>
 
-            {step === 1 ? (
-              <div className="text-center">
-                <h2 className="text-xl font-semibold mb-4">Upload Your NFT</h2>
-                <div
-                  className="border-2 border-dashed border-gray-400 rounded-lg p-6 mb-4 hover:border-blue-500 transition"
-                  onClick={() => document.getElementById('fileInput').click()}
-                >
-                  {uploadedImage ? (
-                    <img
-                      src={uploadedImage}
-                      alt="Uploaded Preview"
-                      className="w-32 h-32 mx-auto object-cover rounded-md"
-                    />
-                  ) : (
-                    <p className="text-gray-500">Click to upload or drag and drop your image</p>
-                  )}
-                </div>
-                <input
-                  id="fileInput"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-                <Button
-                  btnText="Next"
-                  bg="bg-blue-500"
-                  textColor="text-white"
-                  className="mt-4 px-6 py-2"
-                  onClick={() => uploadedImage && setStep(2)}
-                  disabled={!uploadedImage}
-                />
-              </div>
-            ) : (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Enter NFT Details</h2>
-                <div className="grid gap-4">
-                  {/* Name Field */}
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2">NFT Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={metadata.name}
-                      onChange={handleMetadataChange}
-                      className="w-full border rounded-lg p-3 focus:ring focus:outline-none"
-                      placeholder="Enter the name of your NFT"
-                    />
-                  </div>
-                  {/* Description Field */}
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Description</label>
-                    <textarea
-                      name="description"
-                      value={metadata.description}
-                      onChange={handleMetadataChange}
-                      className="w-full border rounded-lg p-3 focus:ring focus:outline-none"
-                      placeholder="Enter a brief description"
-                    />
-                  </div>
-                  {/* Price Field */}
-                  <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Price (ETH)</label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={metadata.price}
-                      onChange={handleMetadataChange}
-                      className="w-full border rounded-lg p-3 focus:ring focus:outline-none"
-                      placeholder="Enter price in ETH"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-between mt-6">
-                  <Button
-                    btnText="Back"
-                    bg="bg-gray-500"
-                    textColor="text-white"
-                    className="px-6 py-2"
-                    onClick={() => setStep(1)}
-                  />
-                  <Button
-                    btnText="Mint"
-                    bg="bg-blue-500"
-                    textColor="text-white"
-                    className="px-6 py-2"
-                    onClick={handleMint}
-                  />
-                </div>
-              </div>
-            )}
+          {/* Right Section: Mint Details */}
+          <div className="h-[463px] w-full md:w-1/2 mt-6 md:mt-0 md:ml-6 flex flex-col justify-between">
+            <h2 className="text-3xl font-bold text-center">Citizens by Solsteads</h2>
+            <div className="flex items-center justify-between space-x-4 mt-6">
+              <button
+                onClick={decreaseQuantity}
+                className="w-16 h-10 flex items-center justify-center bg-gray-700 text-white rounded-md text-2xl font-bold hover:bg-gray-600 "
+              >
+                -
+              </button>
+              <span className="text-2xl font-semibold">{quantity}</span>
+              <button
+                onClick={increaseQuantity}
+                className="w-16 h-10 flex items-center justify-center bg-gray-700 text-white rounded-md text-2xl font-bold hover:bg-gray-600"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-4 text-lg text-end">Max Mint Amount: {maxMint}</p>
+            <p className="mt-6 text-xl border-t border-b border-gray-600 py-2 flex justify-between w-full">
+              <span className="font-semibold">Total:</span>
+              <span>0.02 ETH + gas</span>
+            </p>
+            <button onClick={() => handleMint()} className="mt-6 px-8 py-3 bg-purple-700 rounded-md font-bold text-xl text-white hover:bg-purple-600 transition duration-300">
+              MINT
+            </button>
           </div>
         </div>
-      ) : (
-        <div className="text-center">
-          <p className="mb-4">Please connect your wallet to create NFTs.</p>
-          <Button
-            btnText="Connect Wallet"
-            bg="bg-blue-500"
-            textColor="text-white"
-            onClick={connectWallet}
-            className="px-6 py-2"
-          />
-          {error && <p className="text-red-500 mt-4">{error}</p>}
-        </div>
-      )}
+      </div>
     </Layout>
   );
 }

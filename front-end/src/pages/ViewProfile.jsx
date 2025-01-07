@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import Header from '../components/reuse-component/Header';
-import { fetchUserNFTs } from '../utils/blockchain';
 import { useLocation } from 'react-router-dom';
 import NFTDetailList from './NFTDetailList';
 import NFTCardProfile from '../components/reuse-component/NFTCardProfile';

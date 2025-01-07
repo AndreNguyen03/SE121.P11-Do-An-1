@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useWalletContext } from "../../context/WalletContext";
 import axiosInstance from "../../utils/axiosInstance"; // Kiểm tra `api` có được import
 import socket from "../../utils/socket"; // Đảm bảo socket được khởi tạo
-import { fetchNFTById } from "../../utils/blockchain";
 import axios from "axios";
 
 const NotificationBell = () => {

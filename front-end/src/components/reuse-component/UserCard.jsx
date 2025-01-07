@@ -8,11 +8,11 @@ function UserCard({ user }) {
   };
 
   return (
-    <div className="border rounded-lg shadow-md p-4 hover:shadow-lg transition">
+    <div className="border rounded-lg shadow-md p-4 hover:shadow-lg transition bg-white">
       <img
         src={user.avatar}
         alt={user.username}
-        className="w-24 h-24 rounded-full mx-auto mb-4"
+        className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
       />
       <h3 className="text-lg font-bold text-center">{user.username}</h3>
       <p className="text-sm text-gray-600 text-center mb-3">{user.bio}</p>

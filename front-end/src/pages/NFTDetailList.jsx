@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { listNFT } from '../utils/blockchain';
 import { FaSpinner } from 'react-icons/fa';
 import { useWalletContext } from '../context/WalletContext';
 import socket from '../utils/socket';
