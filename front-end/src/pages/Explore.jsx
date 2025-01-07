@@ -24,36 +24,56 @@ const fakeNFTs = [
     price: 0.02,
     discountedPrice: 0.01,
     image: nft0,
-    trending: true,
     stock: true,
-    traits: ['Abstract', 'Rare'],
+    traits: {
+      Addons: 'None',
+      Background: 'Soft Yellow',
+      Body: 'Magenta',
+      Eyes: 'Circle Eyes',
+      Mouth: 'Wavy Mouth',
+    },
   },
   {
     tokenId: 2,
     name: 'Squish Souls #2',
     price: 0.05,
     image: nft1,
-    trending: false,
     stock: true,
-    traits: ['Geometric'],
+    traits: {
+      Addons: 'Blush Dots',
+      Background: 'Pastel Purple',
+      Body: 'Silver',
+      Eyes: 'Cross Eyes',
+      Mouth: 'Smile Mouth',
+    },
   },
   {
     tokenId: 3,
     name: 'Squish Souls #3',
     price: 0.03,
     image: nft2,
-    trending: true,
     stock: true,
-    traits: ['Space', 'Rare'],
+    traits: {
+      Addons: 'None',
+      Background: 'Silver Gray',
+      Body: 'Emerald',
+      Eyes: 'Half-Open Eyes',
+      Mouth: 'Wavy Mouth',
+    },
   },
   {
     tokenId: 4,
     name: 'Squish Souls #4',
     price: 0.018,
     image: nft3,
-    trending: false,
     stock: false,
-    traits: ['Digital'],
+    traits: {
+      Addons: 'None',
+      Background: 'Pastel Purple',
+      Body: 'Pastel Peach',
+      Eyes: 'Smiley Eyes',
+      Mouth: 'Smile Mouth',
+    },
   },
   {
     tokenId: 5,
@@ -61,9 +81,14 @@ const fakeNFTs = [
     price: 0.05,
     discountedPrice: 0.03,
     image: nft5,
-    trending: true,
     stock: true,
-    traits: ['Futuristic', 'Unique'],
+    traits: {
+      Addons: 'Blush Dots',
+      Background: 'Soft Yellow',
+      Body: 'Coral',
+      Eyes: 'Lined Eyes (Vertical)',
+      Mouth: 'Wavy Mouth',
+    },
   },
   {
     tokenId: 7,
@@ -71,9 +96,14 @@ const fakeNFTs = [
     price: 0.05,
     discountedPrice: 0.04,
     image: nft6,
-    trending: true,
     stock: true,
-    traits: ['Futuristic', 'Unique'],
+    traits: {
+      Addons: 'Blush Dots',
+      Background: 'Silver Gray',
+      Body: 'Silver',
+      Eyes: 'Smiley Eyes',
+      Mouth: 'Smile Mouth',
+    },
   },
   {
     tokenId: 8,
@@ -81,9 +111,14 @@ const fakeNFTs = [
     price: 0.05,
     discountedPrice: 0.025,
     image: nft7,
-    trending: true,
     stock: true,
-    traits: ['Futuristic', 'Unique'],
+    traits: {
+      Addons: 'None',
+      Background: 'Pastel Purple',
+      Body: 'Magenta',
+      Eyes: 'Circle Eyes',
+      Mouth: 'Wavy Mouth',
+    },
   },
   {
     tokenId: 9,
@@ -91,9 +126,14 @@ const fakeNFTs = [
     price: 0.023,
     discountedPrice: 0.02,
     image: nft8,
-    trending: true,
     stock: true,
-    traits: ['Futuristic', 'Unique'],
+    traits: {
+      Addons: 'None',
+      Background: 'Soft Yellow',
+      Body: 'Coral',
+      Eyes: 'Lined Eyes (Vertical)',
+      Mouth: 'Smile Mouth',
+    },
   },
   {
     tokenId: 10,
@@ -101,11 +141,31 @@ const fakeNFTs = [
     price: 0.05,
     discountedPrice: 0.021,
     image: nft10,
-    trending: true,
     stock: true,
-    traits: ['Futuristic', 'Unique'],
+    traits: {
+      Addons: 'Blush Dots',
+      Background: 'Silver Gray',
+      Body: 'Emerald',
+      Eyes: 'Cross Eyes',
+      Mouth: 'Wavy Mouth',
+    },
   },
 ];
+
+// Trait categories and options
+const traitCategories = {
+  Addons: ['None', 'Blush Dots'],
+  Background: ['Pastel Purple', 'Silver Gray', 'Soft Yellow'],
+  Body: ['Emerald', 'Magenta', 'Coral', 'Pastel Peach', 'Silver'],
+  Eyes: [
+    'Circle Eyes',
+    'Lined Eyes (Vertical)',
+    'Cross Eyes',
+    'Half-Open Eyes',
+    'Smiley Eyes',
+  ],
+  Mouth: ['Wavy Mouth', 'Smile Mouth'],
+};
 
 const fakeUsers = [
   {
@@ -137,19 +197,51 @@ const fakeUsers = [
 function Explore() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('NFTs'); // Toggle between NFTs and Users
-  const [priceFilter, setPriceFilter] = useState([0, 1000]); // Min and max price
-  const [showTrending, setShowTrending] = useState(false);
-  const [selectedTrait, setSelectedTrait] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 1000]); // Min and max price
+  const [selectedTraits, setSelectedTraits] = useState({});
+  const [priceSort, setPriceSort] = useState(''); // 'asc' or 'desc'
+  const [expandedCategories, setExpandedCategories] = useState({}); // Independent toggle state for each category
 
-  const uniqueTraits = Array.from(new Set(fakeNFTs.flatMap((nft) => nft.traits)));
+  const toggleTrait = (category, trait) => {
+    setSelectedTraits((prev) => {
+      const currentCategory = prev[category] || [];
+      if (currentCategory.includes(trait)) {
+        return {
+          ...prev,
+          [category]: currentCategory.filter((t) => t !== trait),
+        };
+      }
+      return {
+        ...prev,
+        [category]: [...currentCategory, trait],
+      };
+    });
+  };
 
-  const filteredNFTs = fakeNFTs.filter((nft) => {
-    const matchesSearch = nft.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPrice = nft.price >= priceFilter[0] && nft.price <= priceFilter[1];
-    const matchesTrending = showTrending ? nft.trending : true;
-    const matchesTrait = selectedTrait ? nft.traits.includes(selectedTrait) : true;
-    return matchesSearch && matchesPrice && matchesTrending && matchesTrait;
-  });
+  const toggleCategory = (category) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
+
+  const filteredNFTs = fakeNFTs
+    .filter((nft) => {
+      const matchesSearch = nft.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPrice = nft.price >= priceRange[0] && nft.price <= priceRange[1];
+
+      const matchesTraits = Object.entries(selectedTraits).every(
+        ([category, selectedValues]) =>
+          selectedValues.length === 0 || selectedValues.includes(nft.traits[category])
+      );
+
+      return matchesSearch && matchesPrice && matchesTraits;
+    })
+    .sort((a, b) => {
+      if (priceSort === 'asc') return a.price - b.price;
+      if (priceSort === 'desc') return b.price - a.price;
+      return 0;
+    });
 
   const filteredUsers = fakeUsers.filter((user) =>
     user.username.toLowerCase().includes(searchTerm.toLowerCase())
@@ -195,51 +287,81 @@ function Explore() {
           {activeTab === 'NFTs' && (
             <div className="w-1/4 bg-white border rounded-lg p-4 shadow-md">
               <h2 className="text-lg font-bold mb-4">Filters</h2>
+
+              {/* Price Sorting */}
               <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-2">Price</h3>
+                <h3 className="text-sm font-semibold mb-2">Sort by Price</h3>
+                <select
+                  value={priceSort}
+                  onChange={(e) => setPriceSort(e.target.value)}
+                  className="border rounded-lg p-2 w-full"
+                >
+                  <option value="">None</option>
+                  <option value="asc">Low to High</option>
+                  <option value="desc">High to Low</option>
+                </select>
+              </div>
+
+              {/* Price Range */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-2">Price Range</h3>
                 <div className="flex items-center space-x-2">
                   <input
                     type="number"
                     placeholder="Min"
-                    value={priceFilter[0]}
-                    onChange={(e) => setPriceFilter([Number(e.target.value), priceFilter[1]])}
+                    value={priceRange[0]}
+                    onChange={(e) =>
+                      setPriceRange([Number(e.target.value), priceRange[1]])
+                    }
                     className="border rounded-lg p-2 w-full"
                   />
                   <span>-</span>
                   <input
                     type="number"
                     placeholder="Max"
-                    value={priceFilter[1]}
-                    onChange={(e) => setPriceFilter([priceFilter[0], Number(e.target.value)])}
+                    value={priceRange[1]}
+                    onChange={(e) =>
+                      setPriceRange([priceRange[0], Number(e.target.value)])
+                    }
                     className="border rounded-lg p-2 w-full"
                   />
                 </div>
               </div>
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-2">Traits</h3>
-                <select
-                  value={selectedTrait}
-                  onChange={(e) => setSelectedTrait(e.target.value)}
-                  className="border rounded-lg p-2 w-full"
-                >
-                  <option value="">All</option>
-                  {uniqueTraits.map((trait) => (
-                    <option key={trait} value={trait}>
-                      {trait}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-6">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={showTrending}
-                    onChange={() => setShowTrending(!showTrending)}
-                  />
-                  <span>Show Trending</span>
-                </label>
-              </div>
+
+              {/* Trait Filters */}
+              <h2 className="text-lg font-bold mb-4">Traits</h2>
+              {Object.entries(traitCategories).map(([category, options]) => (
+                <div key={category} className="mb-6">
+                  <div
+                    className="flex justify-between items-center cursor-pointer"
+                    onClick={() => toggleCategory(category)}
+                  >
+                    <h3 className="text-sm font-semibold">{category}</h3>
+                    <span>{expandedCategories[category] ? '-' : '+'}</span>
+                  </div>
+                  {expandedCategories[category] && (
+                    <div className="mt-2 max-h-32 overflow-y-auto">
+                      <div className="flex flex-wrap gap-2">
+                        {options.map((option) => (
+                          <label
+                            key={option}
+                            className="flex items-center space-x-2 text-sm cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={
+                                selectedTraits[category]?.includes(option) || false
+                              }
+                              onChange={() => toggleTrait(category, option)}
+                            />
+                            <span>{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
@@ -249,7 +371,11 @@ function Explore() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {filteredNFTs.length > 0 ? (
                   filteredNFTs.map((nft) => (
-                    <NFTCard key={nft.tokenId} nft={nft} onBuy={() => alert(`You bought ${nft.name}!`)} />
+                    <NFTCard
+                      key={nft.tokenId}
+                      nft={nft}
+                      onBuy={() => alert(`You bought ${nft.name}!`)}
+                    />
                   ))
                 ) : (
                   <p className="text-gray-500">No NFTs found.</p>
@@ -258,7 +384,9 @@ function Explore() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => <UserCard key={user.userId} user={user} />)
+                  filteredUsers.map((user) => (
+                    <UserCard key={user.userId} user={user} />
+                  ))
                 ) : (
                   <p className="text-gray-500">No users found.</p>
                 )}
