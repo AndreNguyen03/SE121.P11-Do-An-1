@@ -1,8 +1,4 @@
 {
-  "TokenModule#NFTSTORE": "0x5bA63c1CF1Bbc6DF3191C76A3f52Ae6001bCA433",
-  "TokenModule#SudokuMarketplace": "0xAd208be77cdcDc7cD95cC5711e4e291ea190922C",
-  "Token#SudokuMarketplace": "0x79EDD55C1d4bd602F560D44ebc630abcD86c8D6c",
-  "Token1#SudokuMarketplace": "0x9d06485D66B3727a1D0674862c3Fe39842D7Bba7",
-  "Token1#SudokuMarketplacetest": "0x04A61028A976cd95aB754bCdAC2086AF842B2e82",
-  "Token2#SudokuMarketplacetest": "0xB7302B5eD3769Fd4A5AAd64EE10435Da71bcB003"
+  "NFTTest#SquishySouls": "0x99dcD520A079782aFd724460d46cc19D88f96a63",
+  "Marketplace#Marketplace": "0xB7C4D080582D8DCcfE3eD52E37389F70677b7e21"
 }

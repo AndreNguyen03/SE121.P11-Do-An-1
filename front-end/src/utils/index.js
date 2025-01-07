@@ -1,11 +1,11 @@
-import nft1 from '../assets/nft1.jpeg'
-import nft2 from '../assets/nft2.jpeg'
-import nft3 from '../assets/nft3.jpeg'
-import nft4 from '../assets/nft4.jpeg'
-import nft5 from '../assets/nft5.jpeg'
-import nft6 from '../assets/nft6.jpeg'
-import nft7 from '../assets/nft7.jpeg'
-import nft8 from '../assets/nft8.jpeg'
+import nft1 from '../assets/1.png'
+import nft2 from '../assets/2.png'
+import nft3 from '../assets/3.png'
+import nft4 from '../assets/5.png'
+import nft5 from '../assets/6.png'
+import nft6 from '../assets/7.png'
+import nft7 from '../assets/8.png'
+import nft8 from '../assets/10.png'
 
 export const nfts = [
     {

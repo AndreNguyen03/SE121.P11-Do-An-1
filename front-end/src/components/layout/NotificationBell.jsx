@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useWalletContext } from "../../context/WalletContext";
 import axiosInstance from "../../utils/axiosInstance"; // Kiểm tra `api` có được import
 import socket from "../../utils/socket"; // Đảm bảo socket được khởi tạo
-import { fetchNFTById } from "../../utils/blockchain";
+import axios from "axios";
 
 const NotificationBell = () => {
   const { isConnected, account } = useWalletContext();
@@ -50,14 +50,14 @@ const NotificationBell = () => {
     setNotifications((prev) => prev.filter((n) => n.nftTokenId !== id));
 
     try {
-      const response = await axiosInstance.post(`/notifications/markAsRead`, {
+      const response = await axios.post(`http://localhost:3056/api/notifications/markAsRead`, {
         nftTokenId: id,
         walletAddress: account.toLowerCase(),
       });
       console.log("Mark as read response:", response.data);
 
       const nft = await fetchNFTById(id);
-      console.log(nft);
+      console.log(`handlemark`,nft);
 
       navigate(`/nft/${nft.tokenId}`, { state: { nft } }); // Điều hướng đến NFTDetail với id
 
@@ -106,7 +106,7 @@ const NotificationBell = () => {
             {notifications.length > 0 ? (
               notifications.map((notification) => (
                 <li
-                  key={notification._id}
+                  key={notification.nftTokenId}
                   className={`cursor-pointer flex items-center gap-3 p-3 ${notification.isRead ? "bg-white" : "bg-gray-50"
                     } hover:bg-gray-100`}
                   onClick={() => handleMarkAsRead(notification.nftTokenId)}

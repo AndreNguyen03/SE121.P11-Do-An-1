@@ -27,7 +27,7 @@ export const sendNotificationToFollowers = async (nftData, listedBy, listedByNam
         // Nếu follower đang online => Gửi socket real-time
         socket.to(onlineUsers.get(followerWallet)).emit('newNotification', notification);
         console.log(`push noti Realtime`)
-      } else {
+      }
         // Nếu follower offline => Lưu vào database
         console.log(`push noti to db`)
         await user.updateOne(
@@ -35,10 +35,7 @@ export const sendNotificationToFollowers = async (nftData, listedBy, listedByNam
           { $push: { notifications: notification } }
         );
       }
-    }
-
-
-  } catch (error) {
+    } catch (error) {
     console.error('Error sending notification:', error);
     throw new Error('Failed to send notification');
   }

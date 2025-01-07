@@ -1,6 +1,6 @@
 import React from 'react'
 import {motion} from 'framer-motion';
-import heroImg from '../../assets/nft1.jpeg'
+import heroImg from '../../assets/10.png'
 
 function HeroImg() {
   return (

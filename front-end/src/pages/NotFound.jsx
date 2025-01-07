@@ -6,14 +6,13 @@ function NotFound() {
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-white to-cyan-200 text-center">
             <div className="mb-8">
-                {/* Illustration or mascot */}
                 <img
-                    src={notfound} // Replace with your mascot image path
+                    src={notfound}
                     alt="Not Found"
                     className="w-[45rem] h-[45rem]"
                 />
             </div>
-            <div className="mb-8 relative -top-20"> {/* Adjust the position upwards */}
+            <div className="mb-8 relative -top-20"> 
                 <h1 className="text-5xl font-extrabold text-gray-800">404</h1>
                 <p className="text-xl font-medium text-gray-600 mt-2">
                     Oops! The page you’re looking for doesn’t exist.

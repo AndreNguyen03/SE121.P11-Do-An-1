@@ -27,14 +27,15 @@ function Navbar() {
     <nav className='fixed flex justify-between items-center w-full drop-shadow-xl border-b-4 p-4 px-6 lg:px-12 z-50 bg-white'>
       <Link to="/">
         <h1 className='text-lg font-bold'>
-          <span className='bg-gradient-to-r from-lime-500 to-blue-400 bg-clip-text text-transparent'>Sudoku</span>
           <span className='ml-1'>NFT</span>
+          <span className='bg-gradient-to-r from-lime-500 to-blue-400 bg-clip-text text-transparent'> Marketplace</span>
+
         </h1>
       </Link>
       <div>
         <div className='text-black hidden lg:flex gap-10 items-center font-medium'>
           <Link to="/Explore">Explore</Link>
-          <Link to="/Create">Create</Link>
+          <Link to="/Mint">Mint</Link>
           <Link to="/profile">Profile</Link>
           {isConnected && <NotificationBell />}
           {isConnected ? (

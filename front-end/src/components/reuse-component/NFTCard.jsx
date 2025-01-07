@@ -6,8 +6,8 @@ const NFTCard = ({ nft, onBuy }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate(`/nft/${tokenId}`);
-  };
+    navigate(`/nftdetail`);
+  }; 
 
   return (
     <div className="relative border p-4 rounded-lg shadow-lg hover:shadow-xl bg-white">
@@ -22,7 +22,7 @@ const NFTCard = ({ nft, onBuy }) => {
       <img
         src={image}
         alt={name}
-        className="w-full h-40 object-cover rounded-lg mb-4 cursor-pointer"
+        className="w-full h-50 object-cover rounded-lg mb-4 cursor-pointer "
         onClick={handleCardClick}
       />
 
@@ -36,14 +36,14 @@ const NFTCard = ({ nft, onBuy }) => {
       <div className="text-gray-600">
         {discountedPrice ? (
           <>
-            <span className="line-through text-red-500">${price}</span>{' '}
-            <span className="text-green-600 font-semibold">${discountedPrice}</span>
+            <span className="line-through text-red-500">{price} SepETH</span>{' '}
+            <span className="text-green-600 font-semibold">{discountedPrice} SepETH</span>
           </>
         ) : (
-          <span className="font-semibold">${price}</span>
+          <span className="font-semibold">{price} SepETH</span>
         )}
       </div>
-      {!stock && <span className="text-sm text-red-500 mt-2 block">Out of Stock</span>}
+      {/* {!stock && <span className="text-sm text-red-500 mt-2 block">Out of Stock</span>} */}
 
       {/* Buy Button */}
       {stock && (

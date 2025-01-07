@@ -16,7 +16,7 @@ function Sudoku({setGameReset}) {
   const [error, setError] = useState("");
   const [invalidCells, setInvalidCells] = useState([]);
   const [fullGrid] = useState(() => generateSudoku6x6());
-  const [initialPuzzle] = useState(() => createPuzzle(fullGrid, 16))
+  const [initialPuzzle] = useState(() => createPuzzle(fullGrid, 16));
   const [currentPuzzle, setCurrentPuzzle] = useState(initialPuzzle);
   const { sudokuInfo, setSudokuInfo } = useSudokuContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -215,7 +215,6 @@ function Sudoku({setGameReset}) {
 
     updateCell(row, col, intValue);
 
-    // Kiểm tra xem giá trị có đúng không
     const isCorrect = intValue === fullGrid[row][col];
     updateInvalidCells(row, col, isCorrect);
     if (!isCorrect) {
@@ -260,6 +259,18 @@ function Sudoku({setGameReset}) {
       }
     });
   };
+
+  const checkCompletion = () => {
+    const isComplete = currentPuzzle.every((row, rowIndex) =>
+      row.every((cell, colIndex) => cell === fullGrid[rowIndex][colIndex])
+    );
+    onUpdate(prev => ({ ...prev, completed: isComplete }));
+  };
+
+  useEffect(() => {
+    checkCompletion();
+    console.log(`12`)
+  }, [currentPuzzle, onUpdate]);
 
   const formatTime = (timeInSeconds) => {
     const minutes = Math.floor(timeInSeconds / 60);
