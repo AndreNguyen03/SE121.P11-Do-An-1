@@ -8,3 +8,27 @@ export const getUserNFTsWithListedStatus = async (ownerAddress) => {
         throw new Error(`Lỗi khi lấy NFT: ${error.message}`);
     }
 };
+
+export const getNFTByTokenId = async (tokenId) => {
+    try {
+        const nft = await NFT.findOne({ tokenId }).exec();
+        if (!nft) {
+            throw new Error('NFT not found');
+        }
+        return nft;
+    } catch (error) {
+        throw new Error(`Error fetching NFT: ${error.message}`);
+    }
+};
+
+export const getAllNFT = async () => {
+    try {
+        const nft = await NFT.find({}).exec();
+        if (!nft) {
+            throw new Error('NFT not found');
+        }
+        return nft;
+    } catch (error) {
+        throw new Error(`Error fetching NFT: ${error.message}`);
+    }
+};

@@ -166,27 +166,35 @@ export const slugify = (text) => {
 import { verifiedFetch } from '@helia/verified-fetch';
 
 export async function fetchImageFromIPFS(ipfsLink) {
-  try {
-    // Chuyển đổi URL HTTP sang ipfs://
-    const ipfsUrl = ipfsLink.replace('https://ipfs.io/ipfs/', 'ipfs://');
+    try {
+        // Chuyển đổi URL HTTP sang ipfs://
+        const ipfsUrl = ipfsLink.replace('https://ipfs.io/ipfs/', 'ipfs://');
 
-    // Fetch ảnh từ IPFS sử dụng verified-fetch
-    const response = await verifiedFetch(ipfsUrl);
+        // Fetch ảnh từ IPFS sử dụng verified-fetch
+        const response = await verifiedFetch(ipfsUrl);
 
-    // Kiểm tra xem phản hồi có OK không
-    if (!response.ok) {
-      throw new Error('Failed to fetch the image');
+        // Kiểm tra xem phản hồi có OK không
+        if (!response.ok) {
+            throw new Error('Failed to fetch the image');
+        }
+
+        // Chuyển đổi dữ liệu từ response thành Blob (để xử lý ảnh)
+        const imageBlob = await response.blob();
+
+        // Tạo URL đối tượng để hiển thị ảnh
+        const imageUrl = URL.createObjectURL(imageBlob);
+
+        return imageUrl; // Trả về URL ảnh để sử dụng trong <img src={imageUrl} />
+    } catch (error) {
+        console.error('Error fetching image:', error);
+        return null;
+    }
+}
+
+export const replaceIpfsWithGateway = (ipfsUrl) => {
+    if (!ipfsUrl.startsWith("ipfs://")) {
+        throw new Error("URL không phải là IPFS URL hợp lệ.");
     }
 
-    // Chuyển đổi dữ liệu từ response thành Blob (để xử lý ảnh)
-    const imageBlob = await response.blob();
-    
-    // Tạo URL đối tượng để hiển thị ảnh
-    const imageUrl = URL.createObjectURL(imageBlob);
-
-    return imageUrl; // Trả về URL ảnh để sử dụng trong <img src={imageUrl} />
-  } catch (error) {
-    console.error('Error fetching image:', error);
-    return null;
-  }
-}
+    return ipfsUrl.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
+};

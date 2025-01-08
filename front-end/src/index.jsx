@@ -22,7 +22,7 @@ const router = createBrowserRouter([
   { path: '/Mint', element: <Create /> },
   { path: '/profile/:walletAddress', element: <ViewProfile /> },
   { path: '/nft/:id', element: <NFTDetailDiscovery /> },
-  { path: '/nftdetail', element: <NFTDetail /> },
+  { path: '/nftdetail/:tokenId', element: <NFTDetail /> },
   { path: '*', element: <NotFound /> },
   { path: '/listing', element: <NFTListingPage /> },
 ]);

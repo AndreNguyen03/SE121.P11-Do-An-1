@@ -2,18 +2,18 @@ import React, { useEffect } from 'react';
 import { replaceIpfsWithGateway } from '../utils';
 import { FaSpinner } from 'react-icons/fa';
 
-function ApproveListingModal({isOpen, onClose, item, isProcessing, listingPrice }) {
+function ApproveBuyModal({ isOpen, onClose, item, isProcessing }) {
   if (!isOpen) return null;
 
-  useEffect(()=> {
+  useEffect(() => {
     console.log(`item :::`, item);
-  },[])
+  }, [])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-white w-100 p-6 rounded-lg shadow-lg">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">Approve Listing</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Approve purchase</h2>
           <button
             onClick={onClose}
             className="text-gray-600 hover:text-gray-800"
@@ -33,7 +33,7 @@ function ApproveListingModal({isOpen, onClose, item, isProcessing, listingPrice 
           </button>
         </div>
         <div className="flex items-center my-8">
-        {isProcessing ? (
+          {isProcessing ? (
             <div className="relative">
               <FaSpinner className="animate-spin absolute left-[-20px] inset-0 m-auto h-12 w-12 text-gray-500" />
               <img
@@ -55,22 +55,22 @@ function ApproveListingModal({isOpen, onClose, item, isProcessing, listingPrice 
             <p className="text-gray-500 text-sm">Chain: {item.chain || 'Sepolia'}</p>
           </div>
           <div className="ml-auto text-right">
-            <p className="text-gray-800 font-bold">{listingPrice || '0.000'} ETH</p>
+            <p className="text-gray-800 font-bold">{item.price || '0.000'} ETH</p>
             <p className="text-gray-600 text-sm">${item.usdPrice || '0.00'}</p>
           </div>
         </div>
 
         <hr className='mb-4'></hr>
 
-        <p className="text-gray-600 text-sm mb-4 font-bold">
+        <p className="text-sm mb-4 font-bold">
           Go to your wallet
         </p>
-        <p className="text-gray-500 text-sm">
-          You’ll be asked to approve this collection from your wallet. You only need to approve each collection once.
+        <p className="text-sm">
+          You'll be asked to approve this purchase from your wallet.
         </p>
       </div>
     </div>
   );
 }
 
-export default ApproveListingModal;
+export default ApproveBuyModal;

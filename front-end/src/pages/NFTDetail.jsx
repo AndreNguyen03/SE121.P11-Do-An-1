@@ -1,9 +1,77 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "../components/layout/Layout";
 import nft1 from '../assets/1.png'
 import avatar3 from '../assets/avatar3.jpg'
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { FaSpinner } from "react-icons/fa";
+import axiosInstance from "../utils/axiosInstance";
+import { replaceIpfsWithGateway } from "../utils";
+import { useWalletContext } from "../context/WalletContext";
+import ApproveBuyModal from "./ApproveBuyModal";
+import ItemBuyModal from "./ItemBuyModal";
+import { buyNFT } from "../utils/contract";
 
 const NFTDetail = () => {
+
+  const { tokenId } = useParams();
+  const [nft, setNft] = useState(null);
+  const { account, signer } = useWalletContext();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [isItemBuyModalOpen, setIsItemBuyModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function fetchNFTByTokenId(tokenId) {
+      try {
+        const response = await axiosInstance.get(`/nft/${tokenId}`);
+        if (response && response.data) {
+          setNft(response.data);
+        } else {
+          console.log('No data found for this tokenId');
+        }
+      } catch (error) {
+        console.log(`Error: ${error}`);
+      }
+    }
+
+    fetchNFTByTokenId(tokenId);
+  }, [tokenId]);
+
+  const handleBuyClick = async () => {
+    if (!nft || !nft.isListed || !nft.price) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setIsApproveModalOpen(true);
+
+    try {
+      // Gọi hàm buyNFT từ contract.js
+      const receipt = await buyNFT(nft.tokenId, nft.price, signer);
+
+      if (receipt) {
+        setIsApproveModalOpen(false);
+        setIsItemBuyModalOpen(true);
+      } else {
+        alert("Unable to complete the purchase. Please try again.");
+      }
+    } catch (error) {
+      console.log("Error during purchase:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  if (!nft) {
+    return (
+      <Layout>
+        <FaSpinner className="animate-spin absolute inset-0 m-auto h-32 w-32 text-white" />
+      </Layout>
+    );
+  }
+
+
+
   // Dữ liệu mẫu
   const nftData = {
     id: "1",
@@ -40,23 +108,27 @@ const NFTDetail = () => {
     ],
   };
 
+  const handleListClick = () => {
+    navigate('/listing', { state: { nft } });
+  };
+
   return (
     <Layout>
       <div className="container mx-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Phần hình ảnh/video NFT */}
           <div className="rounded-lg overflow-hidden shadow-lg">
-            <img src={nftData.image} alt={nftData.name} className="w-full object-cover" />
+            <img src={replaceIpfsWithGateway(nft.metadata.image)} alt={nft.metadata.name} className="w-full object-cover" />
           </div>
 
           {/* Phần thông tin chi tiết */}
           <div className="bg-white p-6 rounded-lg shadow-lg space-y-6">
-            <h1 className="text-3xl font-bold">{nftData.name}</h1>
-            <p className="text-gray-700">{nftData.description}</p>
+            <h1 className="text-3xl font-bold">{nft.metadata.name}</h1>
+            <p className="text-gray-700">{nft.metadata.description}</p>
 
             {/* Giá NFT */}
             <div className="text-2xl text-indigo-600 font-semibold">
-              Price: {nftData.price} SepETH
+              {nft.price && `Price: ${nft.price} ETH`}
             </div>
 
             {/* Thông tin chủ sở hữu */}
@@ -69,22 +141,43 @@ const NFTDetail = () => {
               <div>
                 <p className="text-sm text-gray-500">Current owner:</p>
                 <p className="text-lg font-semibold text-gray-800">{nftData.owner.name}</p>
-                <p className="text-sm text-gray-600">{nftData.owner.address}</p>
+                <p className="text-sm text-gray-600">{nft.ownerAddress}</p>
               </div>
             </div>
 
+            
             {/* Các nút hành động */}
             <div className="flex space-x-4">
-              <button className="bg-indigo-600 text-white px-6 py-3 rounded hover:bg-indigo-500 transition w-1/2">
-                Buy now
-              </button>
+              {account && account.toLowerCase() === nft.ownerAddress.toLowerCase() ? (
+                <div className="flex space-x-4">
+                  <div className="text-green-600 font-semibold px-6 py-3 bg-green-300">
+                    You are the owner of this NFT
+                  </div>
+                  {!nft.isListed && (
+                    <button onClick={handleListClick} className="bg-indigo-600 text-white px-6 py-3 rounded hover:bg-indigo-500 transition">
+                      List NFT
+                    </button>
+                  )}
+                </div>
+              ) : nft.isListed && nft.price ? (
+                <button disabled={isProcessing} onClick={handleBuyClick} className="bg-indigo-600 text-white px-6 py-3 rounded hover:bg-indigo-500 transition w-1/2">
+                  {isProcessing ? (
+                    <FaSpinner className="animate-spin h-6 w-6 text-white mx-auto" />
+                  ) : (
+                    'Buy now'
+                  )}
+                </button>
+              ) : (
+                <button disabled className="bg-gray-300 font-bold text-gray-500 px-6 py-3 rounded w-1/2">
+                  NFT not listed for sale yet
+                </button>
+              )}
             </div>
 
             {/* Thông tin kỹ thuật */}
             <div className="text-sm text-gray-600 space-y-1">
-              <p>Blockchain: {nftData.blockchain}</p>
-              <p>Token ID: {nftData.tokenId}</p>
-              <p>Transaction: {nftData.contractAddress}</p>
+              <p>Blockchain: Sepolia</p>
+              <p>Token ID: {nft.tokenId}</p>
             </div>
           </div>
         </div>
@@ -93,7 +186,7 @@ const NFTDetail = () => {
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-4">Traits</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {nftData.traits.map((trait, index) => (
+            {nft.metadata.attributes.map((trait, index) => (
               <div
                 key={index}
                 className="border rounded-lg p-4 shadow-sm bg-gray-50 text-center"
@@ -122,6 +215,19 @@ const NFTDetail = () => {
           </div>
         </div>
       </div>
+
+      <ApproveBuyModal
+        isOpen={isApproveModalOpen}
+        onClose={() => setIsApproveModalOpen(false)}
+        item={nft}
+        isProcessing={isProcessing}
+      />
+      <ItemBuyModal
+        isOpen={isItemBuyModalOpen}
+        onClose={() => setIsItemBuyModalOpen(false)}
+        item={nft}
+      />
+
     </Layout>
   );
 };

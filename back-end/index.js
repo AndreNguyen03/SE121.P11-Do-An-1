@@ -7,7 +7,7 @@ import userRoutes from './routes/user.routes.js'
 import ipfsRoutes from './routes/ipfs.routes.js'
 import notiRoutes from './routes/notification.routes.js'
 import nftRoutes from './routes/nft.routes.js'
-import { listenToTransfers } from "./listeners/nftListener.js";
+import { listenToMarketplaceEvents } from "./listeners/nftListener.js";
 import path from 'path';
 import url from 'url';
 
@@ -40,10 +40,12 @@ app.use('/api/ipfs', ipfsRoutes);
 app.use('/api/notifications', notiRoutes);
 app.use('/api/nft', nftRoutes);
 
-listenToTransfers();
 
 // db connetion
 Database.getInstance();
+
+listenToMarketplaceEvents();
+
 
 // api endpoints
 app.get("/", (req, res) => {
