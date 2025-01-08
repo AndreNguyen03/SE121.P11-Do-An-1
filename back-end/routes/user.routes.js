@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Route để lưu thông tin người dùng
 router.post('/upload', upload.single('image'), userController.handleCreateUser);
+router.post('/update', upload.single('image'), userController.handleUpdateUser);
 
 // Route để lấy thông tin người dùng theo địa chỉ ví
 router.get('/:walletAddress', userController.handleGetUser);
