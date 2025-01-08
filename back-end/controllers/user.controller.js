@@ -6,14 +6,14 @@ export const handleCreateUser = async (req, res) => {
 
     console.log(req.body, req.file);
 
-    if (!name || !walletAddress || !req.file) {
+    if (!name || !walletAddress) {
       return res.status(400).json({ message: 'Vui lòng nhập đủ thông tin!' });
     }
 
     const user = await userService.createUser({
       name,
       walletAddress,
-      imagePath: req.file.path,
+      imagePath: req.file?.path || null, // Nếu không có file tải lên, để null.
     });
 
     res.status(201).json({ message: 'Lưu thông tin thành công!', user });
@@ -21,6 +21,7 @@ export const handleCreateUser = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
 
 export const handleGetUser = async (req, res) => {
   try {
@@ -66,5 +67,26 @@ export const handleGetUserActionHistory = async (req, res) => {
     res.status(200).json({ message: 'Lấy lịch sử thành công!', actionHistory });
   } catch (error) {
     res.status(404).json({ message: error.message });
+  }
+};
+
+export const handleUpdateUser = async (req, res) => {
+  try {
+    const { walletAddress, name } = req.body;
+
+    if (!walletAddress || !name) {
+      return res.status(400).json({ message: 'Vui lòng nhập đủ thông tin!' });
+    }
+
+    const imagePath = req.file?.path || null; // Nếu có file tải lên thì dùng, nếu không giữ nguyên
+    const updatedUser = await userService.updateUser({
+      walletAddress,
+      name,
+      imagePath,
+    });
+
+    res.status(200).json({ message: 'Cập nhật thông tin thành công!', user: updatedUser });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
