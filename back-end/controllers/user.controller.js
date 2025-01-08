@@ -55,3 +55,16 @@ export const unfollow = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const handleGetUserActionHistory = async (req, res) => {
+  try {
+    const { walletAddress } = req.params;
+
+    // Gọi service để lấy lịch sử hoạt động
+    const actionHistory = await userService.getUserActionHistory(walletAddress);
+
+    res.status(200).json({ message: 'Lấy lịch sử thành công!', actionHistory });
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};

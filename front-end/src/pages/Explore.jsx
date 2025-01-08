@@ -8,20 +8,6 @@ import avatar3 from '../assets/avatar3.jpg'
 import axiosInstance from '../utils/axiosInstance';
 
 
-// Trait categories and options
-const traitCategories = {
-  Addons: ['None', 'Blush Dots'],
-  Background: ['Pastel Purple', 'Silver Gray', 'Soft Yellow'],
-  Body: ['Emerald', 'Magenta', 'Coral', 'Pastel Peach', 'Silver'],
-  Eyes: [
-    'Circle Eyes',
-    'Lined Eyes (Vertical)',
-    'Cross Eyes',
-    'Half-Open Eyes',
-    'Smiley Eyes',
-  ],
-  Mouth: ['Wavy Mouth', 'Smile Mouth'],
-};
 
 const fakeUsers = [
   {
@@ -58,14 +44,17 @@ function Explore() {
   const [priceSort, setPriceSort] = useState(''); // 'asc' or 'desc'
   const [expandedCategories, setExpandedCategories] = useState({}); // Independent toggle state for each category
   const [allNFTs, setAllNFTs] = useState([])
+  const [traitOptions, setTraitOptions] = useState({})
 
   useEffect(() => {
 
     async function fetchAllNFT() {
       try {
         const response = await axiosInstance.get(`/nft`);
-        if(response)
+        if(response && response.data){
           setAllNFTs(response.data);
+          generateTraitOptions(response.data);
+        }
       } catch (error) {
         console.log(`error explore`, error);
       }
@@ -74,52 +63,79 @@ function Explore() {
     fetchAllNFT();
   },[])
 
+  const generateTraitOptions = (nfts) => {
+    const traitMap = {};
 
-  const toggleTrait = (category, trait) => {
-    setSelectedTraits((prev) => {
-      const currentCategory = prev[category] || [];
-      if (currentCategory.includes(trait)) {
-        return {
-          ...prev,
-          [category]: currentCategory.filter((t) => t !== trait),
-        };
-      }
-      return {
-        ...prev,
-        [category]: [...currentCategory, trait],
-      };
-    });
-  };
-
-  const toggleCategory = (category) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
-
-  const filteredNFTs = allNFTs
-    .filter((nft) => {
-      const matchesSearch = nft.metadata.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesPrice = nft.price >= priceRange[0] && nft.price <= priceRange[1];
-
-      const matchesTraits = Object.entries(selectedTraits).every(
-        ([category, selectedValues]) =>
-          selectedValues.length === 0 || selectedValues.includes(nft.attributes[category])
-      );
-
-      return matchesSearch && matchesPrice && matchesTraits;
-    })
-    .sort((a, b) => {
-      if (priceSort === 'asc') return a.price - b.price;
-      if (priceSort === 'desc') return b.price - a.price;
-      return 0;
+    nfts.forEach((nft) => {
+      nft.metadata.attributes.forEach((attribute) => {
+        const { trait_type, value } = attribute;
+        if (!traitMap[trait_type]) {
+          traitMap[trait_type] = new Set();
+        }
+        traitMap[trait_type].add(value);
+      });
     });
 
-  const filteredUsers = fakeUsers.filter((user) =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
+   // Convert Set to Array for each trait type
+   const traitOptions = {};
+   Object.entries(traitMap).forEach(([key, values]) => {
+     traitOptions[key] = Array.from(values);
+   });
+
+   setTraitOptions(traitOptions);
+ };
+
+ const toggleTrait = (category, trait) => {
+   setSelectedTraits((prev) => {
+     const currentCategory = prev[category] || [];
+     if (currentCategory.includes(trait)) {
+       return {
+         ...prev,
+         [category]: currentCategory.filter((t) => t !== trait),
+       };
+     }
+     return {
+       ...prev,
+       [category]: [...currentCategory, trait],
+     };
+   });
+ };
+
+ const toggleCategory = (category) => {
+   setExpandedCategories((prev) => ({
+     ...prev,
+     [category]: !prev[category],
+   }));
+ };
+
+ const filteredNFTs = allNFTs
+   .filter((nft) => {
+     const matchesSearch = nft.metadata.name.toLowerCase().includes(searchTerm.toLowerCase());
+     const matchesPrice =
+       nft.price &&
+       parseFloat(nft.price) >= priceRange[0] &&
+       parseFloat(nft.price) <= priceRange[1];
+
+     const matchesTraits = Object.entries(selectedTraits).every(
+       ([category, selectedValues]) =>
+         selectedValues.length === 0 ||
+         selectedValues.includes(
+           nft.metadata.attributes.find((attr) => attr.trait_type === category)?.value
+         )
+     );
+
+     return matchesSearch && matchesPrice && matchesTraits;
+   })
+   .sort((a, b) => {
+     if (priceSort === 'asc') return a.price - b.price;
+     if (priceSort === 'desc') return b.price - a.price;
+     return 0;
+   });
+
+ const filteredUsers = fakeUsers.filter((user) =>
+   user.username.toLowerCase().includes(searchTerm.toLowerCase())
+ );
   return (
     <Layout>
       <div className="p-6">
@@ -201,9 +217,9 @@ function Explore() {
                 </div>
               </div>
 
-              {/* Trait Filters */}
+              {/* Dynamic Trait Filters */}
               <h2 className="text-lg font-bold mb-4">Traits</h2>
-              {Object.entries(traitCategories).map(([category, options]) => (
+              {Object.entries(traitOptions).map(([category, options]) => (
                 <div key={category} className="mb-6">
                   <div
                     className="flex justify-between items-center cursor-pointer"
@@ -244,10 +260,7 @@ function Explore() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {filteredNFTs.length > 0 ? (
                   filteredNFTs.map((nft) => (
-                    <NFTCard
-                      key={nft.tokenId}
-                      nft={nft}
-                    />
+                    <NFTCard key={nft.tokenId} nft={nft} />
                   ))
                 ) : (
                   <p className="text-gray-500">No NFTs found.</p>

@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import axiosInstance from '../utils/axiosInstance';
 import UserModal from '../pages/UserModal';
 import { base64ToFile, slugify } from '../utils';
+
 // Tạo context để quản lý ví
 const WalletContext = createContext();
 
@@ -38,51 +39,54 @@ export const WalletProvider = ({ children }) => {
 
     const connectWallet = async () => {
         if (!window.ethereum) {
-            throw new Error("Metamask is not installed")
+            throw new Error("Metamask is not installed");
         }
 
         try {
             setIsLoading(true);
             const provider = new ethers.BrowserProvider(window.ethereum);
             setProvider(provider);
+
             const signer = await provider.getSigner();
             setSigner(signer);
+
             const accounts = await provider.send("eth_requestAccounts", []);
-            setIsConnected(true);
             setAccount(accounts[0]);
+            setIsConnected(true);
 
-            await updateBalance(accounts[0],provider);
+            await updateBalance(accounts[0], provider);
 
-            console.log(`account after`, account);
-            const userInfo = await getUserInfoByWalletAddress(accounts[0]);
-            console.log(userInfo);
+            // Kiểm tra nếu user đã tồn tại
+            let userInfo = await getUserInfoByWalletAddress(accounts[0]);
             if (!userInfo) {
-                setShowModal(true); // Hiển thị modal nhập thông tin
-            } else {
-                setAvatar(userInfo.user.image);
-                setUser(userInfo.user);
+                // Nếu không tồn tại, tạo user mới
+                const defaultUserData = { walletAddress: accounts[0], name: "Unamed" };
+                const defaultAvatar = null; // Backend sẽ gán hình mặc định "default.png"
+                userInfo = await createUser(defaultUserData, defaultAvatar);
             }
+
+            // Cập nhật thông tin user và avatar
+            setUser(userInfo.user);
+            setAvatar(userInfo.user.image);
+
+            // Kiểm tra mạng
             const network = await provider.getNetwork();
             const chainID = network.chainId;
-            const sepoliaNetworkId = "11155111"
-
+            const sepoliaNetworkId = "11155111";
             if (chainID.toString() !== sepoliaNetworkId) {
                 alert("Please switch your metamask to sepolia network");
                 return;
             }
+
             setTimeout(() => {
                 setAvatarLoaded(true);
-                setIsLoading(false); // Tắt loading sau 2 giây
-            }, 2000); // Thời gian delay 2 giây
-            
-            // Kiểm tra thông tin người dùng
-
+                setIsLoading(false);
+            }, 2000);
         } catch (error) {
-            console.error("Connection error:", error)
+            console.error("Connection error:", error);
         } finally {
-            setIsLoading(false); 
+            setIsLoading(false);
         }
-
     };
 
     const logoutWallet = () => {
@@ -131,7 +135,7 @@ export const WalletProvider = ({ children }) => {
     };
 
     return (
-        <WalletContext.Provider value={{updateBalance, isLoading, user, balance, avatar, provider, account, setAccount, isConnected, setIsConnected, signer, setSigner, connectWallet, logoutWallet, createUser, getUserInfoByWalletAddress }}>
+        <WalletContext.Provider value={{updateBalance, isLoading, user, balance, avatar, provider, account, setAccount, isConnected, setIsConnected, signer, setSigner, connectWallet, logoutWallet, createUser, getUserInfoByWalletAddress, setShowModal }}>
             {children}
             {showModal && (
                 <UserModal
