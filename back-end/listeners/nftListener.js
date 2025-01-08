@@ -173,11 +173,13 @@ const handleTransfer = async (from, to, tokenId) => {
             console.log(`NFT ${tokenId} ownership transferred to ${to}.`);
         }
 
+        const checkTo = to.toLowerCase() === contractAddressMarketplace.toLowerCase() ? "Marketplace" :  to.toLowerCase();
+
         await ActionHistory.create({
             tokenId: tokenId.toString(),
             action: 'transfer',
             by: from.toLowerCase(),
-            to: to.toLowerCase(),
+            to: checkTo,
             timestamp: new Date(),
         });
 

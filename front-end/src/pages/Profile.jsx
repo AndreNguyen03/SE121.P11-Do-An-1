@@ -4,7 +4,6 @@ import NFTCard from '../components/reuse-component/NFTCard';
 import { useWalletContext } from '../context/WalletContext';
 import axiosInstance from '../utils/axiosInstance';
 import user from '../../../back-end/models/user.model';
-import { use } from 'react';
 
 const Profile = () => {
   const { account, avatar, user, setShowModal } = useWalletContext(); // Lấy thông tin từ WalletContext

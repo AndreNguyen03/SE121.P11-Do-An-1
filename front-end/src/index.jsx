@@ -13,6 +13,7 @@ import Explore from './pages/Explore.jsx'
 import Create from './pages/Create.jsx'
 import NFTDetail from './pages/NFTDetail.jsx'
 import NFTListingPage from './pages/NFTListingPage.jsx'
+import { ToastContainer } from 'react-toastify'
 
 
 const router = createBrowserRouter([
@@ -32,6 +33,7 @@ createRoot(document.getElementById('root')).render(
   <Provider store={store}>
     <WalletProvider>
         <RouterProvider router={router} />
+      <ToastContainer position="top-right" autoClose={3000} />
     </WalletProvider>
   </Provider>
 )

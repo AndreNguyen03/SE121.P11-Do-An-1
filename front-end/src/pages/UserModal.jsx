@@ -1,14 +1,16 @@
 import React, { useState, useRef } from 'react';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.css';
+import { useWalletContext } from '../context/WalletContext';
 
-const UserModal = ({ onClose, createUser, account }) => {
+const UserModal = ({ createUser, account }) => {
     const [name, setName] = useState('');
     const [avatar, setAvatar] = useState(null);
     const [croppedImage, setCroppedImage] = useState(null);
     const [showCropModal, setShowCropModal] = useState(false);
     const cropperRef = useRef(null);
     const avatarInputRef = useRef(null);
+    const {setShowModal} = useWalletContext();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -41,8 +43,16 @@ const UserModal = ({ onClose, createUser, account }) => {
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded shadow-lg w-96">
-                <h2 className="text-xl font-semibold mb-4 text-center">Thông tin người dùng</h2>
+            <div className="bg-white p-6 rounded shadow-lg w-96 relative">
+                {/* Nút Đóng */}
+                <button
+                    onClick={() => setShowModal(false)}
+                    className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+                >
+                    ✕
+                </button>
+
+                <h2 className="text-xl font-semibold mb-4 text-center">User Infomation</h2>
 
                 {/* Avatar Section */}
                 <div className="flex justify-center mb-6">
@@ -63,7 +73,7 @@ const UserModal = ({ onClose, createUser, account }) => {
                 {/* Name Input Section */}
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block font-medium mb-2">Tên:</label>
+                        <label className="block font-medium mb-2">Name :</label>
                         <input
                             type="text"
                             value={name}
@@ -79,7 +89,7 @@ const UserModal = ({ onClose, createUser, account }) => {
                             type="submit"
                             className="px-4 py-2 bg-blue-500 text-white rounded"
                         >
-                            Lưu
+                            Save
                         </button>
                     </div>
                 </form>

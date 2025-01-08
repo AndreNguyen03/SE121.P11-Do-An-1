@@ -10,6 +10,7 @@ import { useWalletContext } from "../context/WalletContext";
 import ApproveBuyModal from "./ApproveBuyModal";
 import ItemBuyModal from "./ItemBuyModal";
 import { buyNFT } from "../utils/contract";
+import { toast } from "react-toastify";
 
 const NFTDetail = () => {
 
@@ -58,6 +59,10 @@ const NFTDetail = () => {
       }
     } catch (error) {
       console.log("Error during purchase:", error);
+      setIsApproveModalOpen(false);
+      if (error.info.error.code === 4001) {
+        toast.info("User rejected transaction! .");
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -145,7 +150,7 @@ const NFTDetail = () => {
               </div>
             </div>
 
-            
+
             {/* Các nút hành động */}
             <div className="flex space-x-4">
               {account && account.toLowerCase() === nft.ownerAddress.toLowerCase() ? (
