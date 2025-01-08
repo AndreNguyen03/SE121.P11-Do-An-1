@@ -5,6 +5,7 @@ import { replaceIpfsWithGateway } from '../../utils/index';
 import { cancelListing } from '../../utils/contract'; // Import cancelListing function
 import ItemBuyModal from '../../pages/ItemBuyModal';
 import ApproveBuyModal from '../../pages/ApproveBuyModal';
+import { buyNFT } from '../../utils/contract';
 
 const NFTCard = ({ nft }) => {
   const { account, signer } = useWalletContext(); // Get signer from context

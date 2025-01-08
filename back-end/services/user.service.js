@@ -8,7 +8,9 @@ export const createUser = async ({ name, walletAddress, imagePath }) => {
     throw new Error('Địa chỉ ví đã tồn tại!');
   }
 
-  const imageUrl = `http://localhost:3056/uploads/${path.basename(imagePath)}`;
+  const imageUrl = imagePath
+    ? `http://localhost:3056/uploads/${path.basename(imagePath)}`
+    : `http://localhost:3056/uploads/default.png`; // Avatar mặc định nếu không có file tải lên.
 
   console.log(imageUrl);
 
@@ -20,6 +22,7 @@ export const createUser = async ({ name, walletAddress, imagePath }) => {
 
   return await newUser.save();
 };
+
 
 export const getUserByWalletAddress = async (walletAddress) => {
   if (!walletAddress) {
@@ -73,4 +76,28 @@ export const getUserActionHistory = async (walletAddress) => {
   } catch (error) {
     throw new Error(error.message);
   }
+};
+
+export const updateUser = async ({ walletAddress, name, imagePath }) => {
+  if (!walletAddress) {
+    throw new Error('Wallet address is required');
+  }
+
+  const existingUser = await user.findOne({ walletAddress });
+  if (!existingUser) {
+    throw new Error('Người dùng không tồn tại!');
+  }
+
+  const updatedData = { name };
+  if (imagePath) {
+    updatedData.image = `http://localhost:3056/uploads/${path.basename(imagePath)}`;
+  }
+
+  const updatedUser = await user.findOneAndUpdate(
+    { walletAddress },
+    { $set: updatedData },
+    { new: true }
+  );
+
+  return updatedUser;
 };
