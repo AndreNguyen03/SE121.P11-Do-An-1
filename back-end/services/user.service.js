@@ -1,5 +1,6 @@
 import user from '../models/user.model.js';
 import path from 'path';
+import actionHistory from '../models/actionHistory.model.js';
 
 export const createUser = async ({ name, walletAddress, imagePath }) => {
   const existingUser = await user.findOne({ walletAddress });
@@ -55,4 +56,21 @@ export const unfollowUser = async (followerAddress, followeeAddress) => {
   );
 
   return { message: `You unfollowed ${followeeAddress}` };
+};
+
+export const getUserActionHistory = async (walletAddress) => {
+  try {
+    // Kiểm tra xem user có tồn tại không
+    const getuser = await user.findOne({ walletAddress });
+    if (!getuser) {
+      throw new Error('Người dùng không tồn tại!');
+    }
+
+    // Tìm kiếm lịch sử hoạt động theo `by` (user thực hiện hành động)
+    const getactionHistory = await actionHistory.find({ by: walletAddress }).sort({ timestamp: -1 });
+    return getactionHistory || [];
+
+  } catch (error) {
+    throw new Error(error.message);
+  }
 };

@@ -14,5 +14,7 @@ router.get('/:walletAddress', userController.handleGetUser);
 router.post('/follow', userController.follow);
 router.post('/unfollow', userController.unfollow);
 
+router.get('/actionhistories/:walletAddress', userController.handleGetUserActionHistory);
+
 
 export default router;
