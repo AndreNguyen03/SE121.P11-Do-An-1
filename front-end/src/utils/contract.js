@@ -1,18 +1,15 @@
-import { ethers } from "ethers";
+import { BrowserProvider, ethers } from "ethers";
 import contractABINFT from '../../ignition/deployments/chain-11155111/artifacts/SquishySouls.json'
 import contractABIMarketplace from '../../ignition/deployments/chain-11155111/artifacts/Marketplace.json'
 import axiosInstance from "./axiosInstance";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
-const contractAddressNFT = "0x99dcD520A079782aFd724460d46cc19D88f96a63";
-const contractAddressMarketplace = "0xB7C4D080582D8DCcfE3eD52E37389F70677b7e21";
+const contractAddressNFT = "0x44eCdFA2204Fc4a9c3e8ee8c4cFaa7392aB9cc74";
+const contractAddressMarketplace = "0x81936Ef8ED97A08aD4867b1cDf48A895F8b7e210";
 
 const BASE_CID_NFT = "bafybeibv4rsudbtbuyybffaqwdtn3wpxkfg4dyy33kwwzqvhexowxnwrgi";
 
-const provider = new ethers.JsonRpcProvider(API_URL);
-
-const contractMarketplace = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, provider);
 
 export async function mintNFT(userAddress, signer) {
 
@@ -38,81 +35,23 @@ export async function mintNFT(userAddress, signer) {
   }
 }
 
-export const getUserNFTs = async (userAddress, signer) => {
-  if (!signer) {
-    throw new Error("Signer không tồn tại!");
-  }
 
-  const contractNFT = new ethers.Contract(contractAddressNFT, contractABINFT.abi, signer);
-
+export const buyNFT = async (tokenId, price, signer) => {
   try {
-    const balance = await contractNFT.balanceOf(userAddress);
-    const userNFTs = [];
+    const contract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, signer);
+    
+    const tx = await contract.buyItem(tokenId, {
+      value: ethers.parseEther(price.toString()), 
+    });
 
-    // Lấy thông tin các token mà người dùng sở hữu
-    for (let tokenId = 0; tokenId < balance; tokenId++) {
-      const owner = await contractNFT.ownerOf(tokenId);
-      if (owner.toLowerCase() === userAddress.toLowerCase()) {
-        const tokenURI = await contractNFT.tokenURI(tokenId);
-        userNFTs.push({ tokenId, tokenURI });
-      }
-    }
-
-    return userNFTs;
-  } catch (err) {
-    console.error("Lỗi khi lấy NFT:", err);
-    throw new Error("Không thể lấy NFT của người dùng.");
+    const receipt = await tx.wait();
+    return receipt;
+  } catch (error) {
+    console.error("Error while buying NFT:", error);
+    throw error;
   }
 };
 
-
-// Hàm niêm yết item
-export async function listItem(tokenId, price, signer) {
-  if (!signer) {
-    throw new Error("Signer không tồn tại!");
-  }
-
-  const contract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, signer);
-  
-  try {
-    const tx = await contract.listItem(tokenId, price);
-    console.log("Listing thành công! Đang chờ xác nhận:", tx.hash);
-
-    // Chờ giao dịch hoàn tất
-    const receipt = await tx.wait();
-    console.log("Listing hoàn tất! Transaction Hash:", receipt);
-    alert(`Item được niêm yết thành công! Token ID: ${tokenId}`);
-    return receipt;
-  } catch (err) {
-    console.error("Listing thất bại:", err);
-    alert("Listing thất bại! Vui lòng thử lại.");
-  }
-}
-
-// Hàm mua item
-export async function buyItem(tokenId, signer, value) {
-  if (!signer) {
-    throw new Error("Signer không tồn tại!");
-  }
-
-  const contract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, signer);
-  
-  try {
-    const tx = await contract.buyItem(tokenId, { value });
-    console.log("Mua NFT thành công! Đang chờ xác nhận:", tx.hash);
-
-    // Chờ giao dịch hoàn tất
-    const receipt = await tx.wait();
-    console.log("Mua hoàn tất! Transaction Hash:", receipt);
-    alert(`Mua thành công! Token ID: ${tokenId}`);
-    return receipt;
-  } catch (err) {
-    console.error("Mua thất bại:", err);
-    alert("Mua thất bại! Vui lòng thử lại.");
-  }
-}
-
-// Hàm hủy listing
 export async function cancelListing(tokenId, signer) {
   if (!signer) {
     throw new Error("Signer không tồn tại!");
@@ -126,12 +65,9 @@ export async function cancelListing(tokenId, signer) {
 
     // Chờ giao dịch hoàn tất
     const receipt = await tx.wait();
-    console.log("Hủy listing hoàn tất! Transaction Hash:", receipt);
-    alert(`Hủy listing thành công! Token ID: ${tokenId}`);
     return receipt;
   } catch (err) {
     console.error("Hủy listing thất bại:", err);
-    alert("Hủy listing thất bại! Vui lòng thử lại.");
   }
 }
 
@@ -152,3 +88,85 @@ export const getAllListedItems = async () => {
     throw new Error("Không thể lấy các item đang niêm yết.");
   }
 };
+
+
+
+
+
+export async function approveNFT() {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const nftContract = new ethers.Contract(contractAddressNFT, contractABINFT.abi, signer);
+
+    // Kiểm tra xem NFT đã được phê duyệt cho marketplace chưa
+    const isApproved = await nftContract.isApprovedForAll(await signer.getAddress(), contractAddressMarketplace);
+    console.log('isApproved:', isApproved);
+
+    if (isApproved) {
+      console.log('NFT already approved for Marketplace');
+      return true; // Không cần phê duyệt lại
+    }
+
+    // Phê duyệt tất cả NFT của người dùng cho marketplace
+    const approveTx = await nftContract.setApprovalForAll(contractAddressMarketplace, true);
+    console.log('Approve Transaction Hash:', approveTx.hash);
+
+    await approveTx.wait();
+    console.log('NFT approved successfully');
+    return true;
+  } catch (error) {
+    console.error('Error approving NFT:', error);
+    return false;
+  }
+}
+
+
+
+
+export async function listNFT(tokenId, price) {
+  if (!window.ethereum) {
+    alert('Please install MetaMask');
+    return false;
+  }
+
+  try {
+    // Kết nối ví
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    // Kết nối tới contract NFT và Marketplace
+    const nftContract = new ethers.Contract(contractAddressNFT, contractABINFT.abi, signer);
+    const marketplaceContract = new ethers.Contract(contractAddressMarketplace, contractABIMarketplace.abi, signer);
+
+    // Kiểm tra quyền sở hữu NFT
+    const owner = await nftContract.ownerOf(tokenId);
+    const userAddress = await signer.getAddress();
+    if (owner.toLowerCase() !== userAddress.toLowerCase()) {
+      console.error('NFT ownership mismatch:', { owner, userAddress });
+      return false;
+    }
+
+    // Kiểm tra trạng thái niêm yết
+    const listing = await marketplaceContract.listings(tokenId); // Cần bổ sung hàm `isListed` trong contract
+    const isListed = listing[2];
+    if (isListed) {
+      console.error('NFT already listed:', tokenId);
+      return false;
+    }
+
+    // Chuyển giá sang Wei
+    const priceInWei = ethers.parseEther(price.toString());
+    console.log('Price in Wei:', priceInWei);
+
+    // Gọi lệnh listItem để niêm yết NFT
+    const listTx = await marketplaceContract.listItem(tokenId, priceInWei);
+    console.log('Transaction Hash:', listTx.hash);
+
+    await listTx.wait(); // Đợi giao dịch hoàn thành
+    return true;
+  } catch (error) {
+    console.error('Error listing NFT:', error.message);
+    return false;
+  }
+}

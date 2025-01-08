@@ -1,156 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import NFTCard from '../components/reuse-component/NFTCard';
 import UserCard from '../components/reuse-component/UserCard';
-import nft0 from '../assets/0.png'
-import nft1 from '../assets/1.png'
-import nft2 from '../assets/2.png'
-import nft3 from '../assets/3.png'
-import nft5 from '../assets/5.png'
-import nft6 from '../assets/6.png'
-import nft7 from '../assets/7.png'
-import nft8 from '../assets/8.png'
-import nft10 from '../assets/10.png'
 import avatar1 from '../assets/avatar1.jpg'
 import avatar2 from '../assets/avatar2.jpg'
 import avatar3 from '../assets/avatar3.jpg'
+import axiosInstance from '../utils/axiosInstance';
 
-
-// Fake data for NFTs
-const fakeNFTs = [
-  {
-    tokenId: 1,
-    name: 'Squish Souls #1',
-    price: 0.02,
-    discountedPrice: 0.01,
-    image: nft0,
-    stock: true,
-    traits: {
-      Addons: 'None',
-      Background: 'Soft Yellow',
-      Body: 'Magenta',
-      Eyes: 'Circle Eyes',
-      Mouth: 'Wavy Mouth',
-    },
-  },
-  {
-    tokenId: 2,
-    name: 'Squish Souls #2',
-    price: 0.05,
-    image: nft1,
-    stock: true,
-    traits: {
-      Addons: 'Blush Dots',
-      Background: 'Pastel Purple',
-      Body: 'Silver',
-      Eyes: 'Cross Eyes',
-      Mouth: 'Smile Mouth',
-    },
-  },
-  {
-    tokenId: 3,
-    name: 'Squish Souls #3',
-    price: 0.03,
-    image: nft2,
-    stock: true,
-    traits: {
-      Addons: 'None',
-      Background: 'Silver Gray',
-      Body: 'Emerald',
-      Eyes: 'Half-Open Eyes',
-      Mouth: 'Wavy Mouth',
-    },
-  },
-  {
-    tokenId: 4,
-    name: 'Squish Souls #4',
-    price: 0.018,
-    image: nft3,
-    stock: false,
-    traits: {
-      Addons: 'None',
-      Background: 'Pastel Purple',
-      Body: 'Pastel Peach',
-      Eyes: 'Smiley Eyes',
-      Mouth: 'Smile Mouth',
-    },
-  },
-  {
-    tokenId: 5,
-    name: 'Squish Souls #5',
-    price: 0.05,
-    discountedPrice: 0.03,
-    image: nft5,
-    stock: true,
-    traits: {
-      Addons: 'Blush Dots',
-      Background: 'Soft Yellow',
-      Body: 'Coral',
-      Eyes: 'Lined Eyes (Vertical)',
-      Mouth: 'Wavy Mouth',
-    },
-  },
-  {
-    tokenId: 7,
-    name: 'Squish Souls #6',
-    price: 0.05,
-    discountedPrice: 0.04,
-    image: nft6,
-    stock: true,
-    traits: {
-      Addons: 'Blush Dots',
-      Background: 'Silver Gray',
-      Body: 'Silver',
-      Eyes: 'Smiley Eyes',
-      Mouth: 'Smile Mouth',
-    },
-  },
-  {
-    tokenId: 8,
-    name: 'Squish Souls #7',
-    price: 0.05,
-    discountedPrice: 0.025,
-    image: nft7,
-    stock: true,
-    traits: {
-      Addons: 'None',
-      Background: 'Pastel Purple',
-      Body: 'Magenta',
-      Eyes: 'Circle Eyes',
-      Mouth: 'Wavy Mouth',
-    },
-  },
-  {
-    tokenId: 9,
-    name: 'Squish Souls #8',
-    price: 0.023,
-    discountedPrice: 0.02,
-    image: nft8,
-    stock: true,
-    traits: {
-      Addons: 'None',
-      Background: 'Soft Yellow',
-      Body: 'Coral',
-      Eyes: 'Lined Eyes (Vertical)',
-      Mouth: 'Smile Mouth',
-    },
-  },
-  {
-    tokenId: 10,
-    name: 'Squish Souls #9',
-    price: 0.05,
-    discountedPrice: 0.021,
-    image: nft10,
-    stock: true,
-    traits: {
-      Addons: 'Blush Dots',
-      Background: 'Silver Gray',
-      Body: 'Emerald',
-      Eyes: 'Cross Eyes',
-      Mouth: 'Wavy Mouth',
-    },
-  },
-];
 
 // Trait categories and options
 const traitCategories = {
@@ -201,6 +57,23 @@ function Explore() {
   const [selectedTraits, setSelectedTraits] = useState({});
   const [priceSort, setPriceSort] = useState(''); // 'asc' or 'desc'
   const [expandedCategories, setExpandedCategories] = useState({}); // Independent toggle state for each category
+  const [allNFTs, setAllNFTs] = useState([])
+
+  useEffect(() => {
+
+    async function fetchAllNFT() {
+      try {
+        const response = await axiosInstance.get(`/nft`);
+        if(response)
+          setAllNFTs(response.data);
+      } catch (error) {
+        console.log(`error explore`, error);
+      }
+    }
+
+    fetchAllNFT();
+  },[])
+
 
   const toggleTrait = (category, trait) => {
     setSelectedTraits((prev) => {
@@ -225,14 +98,14 @@ function Explore() {
     }));
   };
 
-  const filteredNFTs = fakeNFTs
+  const filteredNFTs = allNFTs
     .filter((nft) => {
-      const matchesSearch = nft.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = nft.metadata.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesPrice = nft.price >= priceRange[0] && nft.price <= priceRange[1];
 
       const matchesTraits = Object.entries(selectedTraits).every(
         ([category, selectedValues]) =>
-          selectedValues.length === 0 || selectedValues.includes(nft.traits[category])
+          selectedValues.length === 0 || selectedValues.includes(nft.attributes[category])
       );
 
       return matchesSearch && matchesPrice && matchesTraits;
@@ -374,7 +247,6 @@ function Explore() {
                     <NFTCard
                       key={nft.tokenId}
                       nft={nft}
-                      onBuy={() => alert(`You bought ${nft.name}!`)}
                     />
                   ))
                 ) : (

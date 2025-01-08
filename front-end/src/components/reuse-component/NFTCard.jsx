@@ -1,28 +1,104 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useWalletContext } from '../../context/WalletContext';
+import { replaceIpfsWithGateway } from '../../utils/index';
+import { cancelListing } from '../../utils/contract'; // Import cancelListing function
+import ItemBuyModal from '../../pages/ItemBuyModal';
+import ApproveBuyModal from '../../pages/ApproveBuyModal';
 
-const NFTCard = ({ nft, onBuy }) => {
-  const { image, name, price, discountedPrice, onSale, tokenId, stock } = nft;
+const NFTCard = ({ nft }) => {
+  const { account, signer } = useWalletContext(); // Get signer from context
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isCancelModalOpen, setCancelModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const isExplorePage = location.pathname.includes('Explore');
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+
+  if (!nft || !nft.metadata) {
+    return null;
+  }
 
   const handleCardClick = () => {
-    navigate(`/nftdetail`);
-  }; 
+    navigate(`/nftdetail/${nft.tokenId}`);
+  };
+
+  const handleListClick = () => {
+    navigate('/listing', { state: { nft } });
+  };
+
+  const handleCancelClick = () => {
+    setCancelModalOpen(true); // Open confirmation modal
+  };
+
+  const handleCancelConfirm = async () => {
+    try {
+      setIsLoading(true); // Start loading
+      console.log(`Canceling listing for Token ID: ${nft.tokenId}`);
+
+      // Call cancelListing function
+      const receipt = await cancelListing(nft.tokenId, signer);
+
+      if (receipt) {
+        alert(`Listing for Token ID ${nft.tokenId} has been successfully canceled!`);
+
+        nft.isListed = false; // Update NFT to be no longer listed
+
+        // Call the parent function to update the state (or list)
+        if (onUpdate) {
+          onUpdate(nft.tokenId, nft); // Pass the updated NFT
+        }
+
+      } else {
+        alert("Unable to cancel listing. Please try again.");
+      }
+    } catch (err) {
+      console.error("Failed to cancel listing:", err);
+      alert("An error occurred while canceling the listing. Please try again.");
+    } finally {
+      setIsLoading(false); // Stop loading
+      setCancelModalOpen(false); // Close modal
+    }
+  };
+
+  const handleCancelClose = () => {
+    setCancelModalOpen(false); // Close confirmation modal
+  };
+
+  const handleBuy = async () => {
+    try {
+      setIsLoading(true); // Bắt đầu quá trình xử lý
+
+      console.log(`Purchasing NFT with Token ID: ${nft.tokenId}`);
+
+      // Gọi hàm buyNFT để mua NFT
+      const receipt = await buyNFT(nft.tokenId, nft.price, signer);
+
+      if (receipt) {
+        alert(`NFT with Token ID ${nft.tokenId} has been successfully purchased!`);
+        nft.isListed = false; 
+        setIsLoading(false);
+        setIsApproveModalOpen(false); 
+        setIsBuyModalOpen(true);
+      } else {
+        alert("Unable to purchase the NFT. Please try again.");
+      }
+    } catch (err) {
+      console.error("Failed to purchase NFT:", err);
+      alert("An error occurred while purchasing the NFT. Please try again.");
+    } finally {
+      setIsLoading(false); // Dừng quá trình xử lý
+    }
+  };
 
   return (
     <div className="relative border p-4 rounded-lg shadow-lg hover:shadow-xl bg-white">
-      {/* Sale Label */}
-      {onSale && (
-        <span className="absolute top-2 left-2 bg-black text-white text-sm px-2 py-1 rounded-md">
-          Sale!
-        </span>
-      )}
-
       {/* NFT Image */}
       <img
-        src={image}
-        alt={name}
-        className="w-full h-50 object-cover rounded-lg mb-4 cursor-pointer "
+        src={replaceIpfsWithGateway(nft.metadata.image)}
+        alt={nft.metadata.name}
+        className="w-full h-50 object-cover rounded-lg mb-4 cursor-pointer"
         onClick={handleCardClick}
       />
 
@@ -31,29 +107,79 @@ const NFTCard = ({ nft, onBuy }) => {
         className="text-lg font-bold mb-2 cursor-pointer"
         onClick={handleCardClick}
       >
-        {name}
+        {nft.metadata.name}
       </h3>
       <div className="text-gray-600">
-        {discountedPrice ? (
-          <>
-            <span className="line-through text-red-500">{price} SepETH</span>{' '}
-            <span className="text-green-600 font-semibold">{discountedPrice} SepETH</span>
-          </>
-        ) : (
-          <span className="font-semibold">{price} SepETH</span>
-        )}
+        {nft.isListed && <span className="font-semibold">{nft.price} ETH</span>}
       </div>
-      {/* {!stock && <span className="text-sm text-red-500 mt-2 block">Out of Stock</span>} */}
 
-      {/* Buy Button */}
-      {stock && (
+      {/* Action Buttons */}
+      {account && nft.ownerAddress !== account.toLowerCase() ? (
+        nft.isListed ? (
+          <button
+            className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700"
+            onClick={handleBuy}
+          >
+            Buy
+          </button>
+        ) : null
+      ) : nft.isListed && !isExplorePage ? (
         <button
-          className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700"
-          onClick={onBuy}
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700"
+          onClick={handleCancelClick}
+          disabled={isLoading}
         >
-          Buy
+          {isLoading ? "Processing..." : "Cancel Listing"}
+        </button>
+      ) : (!isExplorePage &&
+        <button
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
+          onClick={handleListClick}
+        >
+          List
         </button>
       )}
+
+      {/* Confirmation Modal */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg w-96">
+            <h2 className="text-lg font-bold mb-4">Cancel Confirmation</h2>
+            <p className="mb-6">
+              Are you sure you want to cancel the listing for <strong>{nft.metadata.name}</strong>?
+            </p>
+            <div className="flex justify-end">
+              <button
+                className="mr-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-700"
+                onClick={handleCancelClose}
+                disabled={isLoading}
+              >
+                Close
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700"
+                onClick={handleCancelConfirm}
+                disabled={isLoading}
+              >
+                {isLoading ? "Processing..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ApproveBuyModal 
+        isOpen={isApproveModalOpen} 
+        onClose={() => setIsApproveModalOpen(false)} 
+        item={nft}
+        isProcessing={isLoading}
+      />
+
+      <ItemBuyModal 
+        isOpen={isBuyModalOpen} 
+        onClose={() => setIsBuyModalOpen(false)} 
+        item={nft}
+      />
+
     </div>
   );
 };

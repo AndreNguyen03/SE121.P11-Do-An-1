@@ -3,7 +3,7 @@ import Layout from '../components/layout/Layout';
 import Button from '../components/reuse-component/Button';
 import { useWalletContext } from '../context/WalletContext';
 import nft1 from '../assets/1.png'
-import { getUserNFTs, mintNFT } from '../utils/contract';
+import { mintNFT } from '../utils/contract';
 
 function Create() {
   const { isConnected, connectWallet, account, signer } = useWalletContext();
@@ -26,8 +26,6 @@ function Create() {
 
       console.log(`transaction mint :::`, tx);
 
-      const userNFTs = await getUserNFTs(account,signer);
-      console.log(`userNFTs ::: `, userNFTs);
     } catch (error) {
       console.log(error);
     }

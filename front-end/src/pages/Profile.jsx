@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import NFTCard from '../components/reuse-component/NFTCard';
 import nft1 from '../assets/1.png'
@@ -6,6 +6,9 @@ import nft2 from '../assets/2.png'
 import nft3 from '../assets/3.png'
 import nft5 from '../assets/5.png'
 import avatar3 from '../assets/avatar3.jpg'
+import { useWalletContext } from '../context/WalletContext';
+import axiosInstance from '../utils/axiosInstance';
+import user from '../../../back-end/models/user.model';
 
 const Profile = () => {
   const fakeUser = {
@@ -17,27 +20,7 @@ const Profile = () => {
 
   const tabs = ['Owned', 'On sale', 'Created', 'Favorited', 'Activity'];
 
-  // Fake Data  
-  const initialNFTs = [
-    { tokenId: 1, name: 'Squish Souls #2', isListed: true, price: 0.1, image: nft1 },
-    { tokenId: 2, name: 'Squish Souls #3', isListed: false, image: nft2 },
-    { tokenId: 3, name: 'Squish Souls #4', isListed: true, price: 0.3, image: nft3 },
-    { tokenId: 4, name: 'Squish Souls #5', isListed: false, image: nft5 },
-  ];
-  const createdNFTs = [
-    {
-      tokenId: 1,
-      name: 'My First NFT',
-      image: nft2,
-      price: 0.5,
-    },
-    {
-      tokenId: 2,
-      name: 'Artistic Piece',
-      image: nft3,
-      price: 1,
-    },
-  ];
+
   const favoritedNFTs = [
     {
       tokenId: 3,
@@ -50,15 +33,6 @@ const Profile = () => {
       image: nft3,
     },
   ];
-  const offersMade = [
-    { id: 1, name: 'NFT Alpha', priceOffered: 0.15, status: 'Pending' },
-    { id: 2, name: 'NFT Beta', priceOffered: 0.25, status: 'Rejected' },
-    { id: 3, name: 'NFT Gamma', priceOffered: 0.35, status: 'Accepted' },
-  ];
-  const deals = [
-    { id: 1, name: 'NFT Delta', price: 0.2, date: '2024-12-25' },
-    { id: 2, name: 'NFT Epsilon', price: 0.3, date: '2024-12-26' },
-  ];
   const activityLog = [
     { id: 1, activity: 'Listed NFT #1 for 0.1 ETH', date: '2024-12-20' },
     { id: 2, activity: 'Made an offer for NFT Gamma', date: '2024-12-21' },
@@ -66,18 +40,36 @@ const Profile = () => {
   ];
 
   const [activeTab, setActiveTab] = useState('Owned');
-  const [collectedTab, setCollectedTab] = useState('Unlisted');
-  const [nfts, setNFTs] = useState(initialNFTs);
+  const [nfts, setNFTs] = useState([]);
 
-  const handleListNFT = (tokenId) => {
-    // Cập nhật trạng thái NFT thành "Listed"
-    setNFTs((prevNFTs) =>
-      prevNFTs.map((nft) =>
-        nft.tokenId === tokenId ? { ...nft, isListed: true, price: 0.2 } : nft
+
+  const { account, signer } = useWalletContext();
+
+  const ownedList = nfts.filter(nft => nft.ownerAddress === account);
+  const onSaleList = nfts.filter(nft => nft.ownerAddress === account && nft.isListed);
+  const createdList = nfts.filter(nft => nft.createdBy === account);
+
+  const updateNFTList = (tokenId, updatedNft) => {
+    setNFTs((prevNfts) =>
+      prevNfts.map((nft) =>
+        nft.tokenId === tokenId ? { ...nft, isListed: false } : nft
       )
     );
-    alert(`NFT #${tokenId} has been listed successfully!`);
   };
+
+  useEffect(() => {
+    try {
+      async function fetchUserNfts() {
+        const response = await axiosInstance.get(`/nft/user-nfts/${account}`);
+        const userNFTs = response.data;
+        console.log(userNFTs);
+        setNFTs(userNFTs);
+      }
+      fetchUserNfts()
+    } catch (error) {
+      console.log(error);
+    }
+  }, [account])
 
   return (
     <Layout>
@@ -118,7 +110,7 @@ const Profile = () => {
       {/* Profile Details */}
       <div className="pt-16 px-8">
         <h2 className="text-2xl font-bold">{fakeUser.name}</h2>
-        <p className="text-gray-600">{fakeUser.wallet}</p>
+        <p className="text-gray-600">{account}</p>
         <p className="text-gray-500 text-sm">Joined {fakeUser.joined}</p>
 
         {/* Tabs */}
@@ -145,62 +137,20 @@ const Profile = () => {
             <div>
               {/* NFTs */}
               <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
-                {nfts
+                {ownedList
                   .map((nft) => (
                     <NFTCard
                       key={nft.tokenId}
                       nft={nft}
+                      onUpdate={updateNFTList}
                     >
-                      {!nft.isListed && (
-                        <button
-                          onClick={() => handleListNFT(nft.tokenId)}
-                          className="mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700"
-                        >
-                          List
-                        </button>
-                      )}
                     </NFTCard>
                   ))}
               </div>
             </div>
           )}
 
-          {activeTab === 'Offers made' && (
-            <div>
-              {offersMade.map((offer) => (
-                <div
-                  key={offer.id}
-                  className="p-4 bg-gray-100 border rounded-lg shadow-sm flex justify-between items-center"
-                >
-                  <div>
-                    <p className="text-lg font-bold">{offer.name}</p>
-                    <p className="text-gray-500">Offered: {offer.priceOffered} ETH</p>
-                  </div>
-                  <p className={`font-semibold ${offer.status === 'Accepted' ? 'text-green-500' : offer.status === 'Rejected' ? 'text-red-500' : 'text-yellow-500'}`}>
-                    {offer.status}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'Deals' && (
-            <div>
-              {deals.map((deal) => (
-                <div
-                  key={deal.id}
-                  className="p-4 bg-gray-100 border rounded-lg shadow-sm flex justify-between items-center"
-                >
-                  <p className="text-lg font-bold">{deal.name}</p>
-                  <div className="text-right">
-                    <p>{deal.price} ETH</p>
-                    <p className="text-gray-500 text-sm">{deal.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
+        
           {activeTab === 'Activity' && (
             <div>
               {activityLog.map((log) => (
@@ -214,7 +164,15 @@ const Profile = () => {
 
           {activeTab === 'Created' && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
-              {createdNFTs.map((nft) => (
+              {createdList.map((nft) => (
+                <NFTCard key={nft.tokenId} nft={nft} />
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'On sale' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
+              {onSaleList.map((nft) => (
                 <NFTCard key={nft.tokenId} nft={nft} />
               ))}
             </div>
