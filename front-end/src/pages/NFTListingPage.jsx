@@ -16,9 +16,9 @@ function NFTListingPage() {
     const [isItemListedModalOpen, setIsItemListedModalOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const [price, setPrice] = useState(''); 
-    const [listingPrice, setListingPrice] = useState(0); 
-    const feePercentage = 2.5; 
+    const [price, setPrice] = useState('');
+    const [listingPrice, setListingPrice] = useState(0);
+    const feePercentage = 2.5;
 
     if (!nft) {
         navigate(-1);
@@ -31,9 +31,9 @@ function NFTListingPage() {
 
 
     const handlePriceChange = (e) => {
-        const inputPrice = parseFloat(e.target.value) || 0; 
-        setPrice(e.target.value); 
-        setListingPrice(inputPrice); 
+        const inputPrice = parseFloat(e.target.value) || 0;
+        setPrice(e.target.value);
+        setListingPrice(inputPrice);
     };
 
     const calculateEarnings = () => {
@@ -54,7 +54,7 @@ function NFTListingPage() {
                 setIsModalOpen(false);
                 alert('Approval failed. Please try again.');
                 return;
-            }
+            } 
 
             // Bước 3: Tiến hành niêm yết NFT sau khi phê duyệt thành công
             const listSuccess = await listNFT(nft.tokenId, listingPrice);
@@ -62,8 +62,8 @@ function NFTListingPage() {
             if (listSuccess) {
                 // Bước 4: Niêm yết thành công, hiển thị modal item listed
                 setIsProcessing(false);
-                setIsModalOpen(false); 
-                setIsItemListedModalOpen(true); 
+                setIsModalOpen(false);
+                setIsItemListedModalOpen(true);
             } else {
                 setIsProcessing(false);
                 setIsModalOpen(false);
@@ -72,6 +72,7 @@ function NFTListingPage() {
             setIsProcessing(false);
             console.error('Error in handleListItem:', error);
             setIsModalOpen(false);
+            
         }
     };
 
@@ -102,7 +103,7 @@ function NFTListingPage() {
                 <div className="border rounded-lg overflow-hidden shadow-lg w-[200px] m-auto">
                     <div className="bg-gray-100 flex items-center justify-center">
                         <img
-                            src={replaceIpfsWithGateway(nft.metadata.image)} 
+                            src={replaceIpfsWithGateway(nft.metadata.image)}
                             alt="NFT Preview"
                             className="object-cover w-full h-50"
                         />

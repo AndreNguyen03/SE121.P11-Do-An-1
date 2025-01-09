@@ -8,8 +8,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Contract addresses
-const contractAddressNFT = "0x44eCdFA2204Fc4a9c3e8ee8c4cFaa7392aB9cc74";
-const contractAddressMarketplace = "0x81936Ef8ED97A08aD4867b1cDf48A895F8b7e210";
+const contractAddressNFT = "0x513Ae2fAD04819ad12acb71b5D5998080DD6D478";
+const contractAddressMarketplace = "0x6dbB51Eee7dcAd3109755CdB6F13B2625607122A";
 
 // Providers and contracts
 const provider = new ethers.providers.WebSocketProvider(`wss://${process.env.ALCHEMY_URL}`);
@@ -24,7 +24,7 @@ export const listenToMarketplaceEvents = () => {
     marketplaceContract.on('ItemListed', handleItemListed);
     marketplaceContract.on('ItemSold', handleItemSold);
     marketplaceContract.on('ItemCanceled', handleItemCanceled);
-    nftContract.on('Transfer', handleTransfer);
+    nftContract.on('Mint', handleMint);
 
 };
 
@@ -91,6 +91,17 @@ const handleItemSold = async (seller, buyer, tokenId, price) => {
             timestamp: new Date(),
         });
 
+         // Lưu lịch sử thao tác của người mua
+         await ActionHistory.create({
+          tokenId: tokenId.toString(),
+          action: 'buy',
+          by: buyer.toLowerCase(),
+          to: seller.toLowerCase(),
+          price: ethers.utils.formatEther(price),
+          timestamp: new Date(),
+      });
+
+
         console.log(`NFT ${tokenId} sold successfully.`);
     } catch (error) {
         console.error(`Error processing ItemSold for TokenID ${tokenId}:`, error);
@@ -127,77 +138,58 @@ const handleItemCanceled = async (seller, tokenId) => {
     }
 };
 
-// Hàm xử lý sự kiện Transfer
-const handleTransfer = async (from, to, tokenId) => {
-    try {
-        console.log(`Transfer detected: TokenID ${tokenId} transferred from ${from} to ${to}`);
+// Hàm xử lý sự kiện Mint
+const handleMint = async (to, tokenId, tokenURI) => {
+  try {
+    console.log(`Mint detected: TokenID ${tokenId} minted to ${to}`);
 
-        // Kiểm tra nếu là sự kiện mint (from là address zero)
-        if (from === ethers.constants.AddressZero) {
-            console.log(`TokenID ${tokenId} minted to ${to}`);
+    // Lấy metadata từ tokenURI
+    const metadata = await fetchMetadata(tokenURI);
 
-            // Fetch metadata từ tokenURI
-            const tokenURI = await nftContract.tokenURI(tokenId);
-            const metadata = await fetchMetadata(tokenURI);
+    // Lưu thông tin NFT vào database
+    await NFT.updateOne(
+      { tokenId: tokenId.toString() },
+      {
+        ownerAddress: to.toLowerCase(),
+        tokenURI,
+        metadata,
+        created: new Date(),
+        createdBy: to.toLowerCase(),
+        isListed: false,
+        status: "minted",
+      },
+      { upsert: true }
+    );
 
-            // Lưu thông tin NFT vào database
-            await NFT.updateOne(
-                { tokenId: tokenId.toString() },
-                {
-                    ownerAddress: to.toLowerCase(),
-                    tokenURI,
-                    metadata,
-                    created: new Date(),
-                    createdBy: to.toLowerCase(),
-                    isListed: false,
-                    status: 'minted',
-                },
-                { upsert: true }
-            );
+    // Lưu lịch sử thao tác
+    await ActionHistory.create({
+      tokenId: tokenId.toString(),
+      action: "mint",
+      by: to.toLowerCase(),
+      tokenURI,
+      metadata,
+      timestamp: new Date(),
+    });
 
-            // Lưu lịch sử thao tác
-
-
-            console.log(`NFT ${tokenId} minted and saved to database.`);
-        } else {
-            // Cập nhật thông tin chủ sở hữu mới trong database
-            if (to !== contractAddressMarketplace) {
-                await NFT.updateOne(
-                    { tokenId: tokenId.toString() },
-                    {
-                        ownerAddress: to.toLowerCase(),
-                    }
-                );
-            }
-
-            console.log(`NFT ${tokenId} ownership transferred to ${to}.`);
-        }
-
-        await ActionHistory.create({
-            tokenId: tokenId.toString(),
-            action: 'transfer',
-            by: from.toLowerCase(),
-            to: to.toLowerCase(),
-            timestamp: new Date(),
-        });
-
-    } catch (error) {
-        console.error(`Error processing Transfer for TokenID ${tokenId}:`, error);
-    }
+    console.log(`NFT ${tokenId} minted and saved to database.`);
+  } catch (error) {
+    console.error(`Error processing Mint for TokenID ${tokenId}:`, error);
+  }
 };
 
+// Hàm fetch metadata từ IPFS
 const fetchMetadata = async (tokenURI) => {
-    try {
-        if (tokenURI.startsWith('ipfs://')) {
-            tokenURI = tokenURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/');
-        }
-
-        console.log(`Fetching metadata from TokenURI: ${tokenURI}`);
-        const response = await fetch(tokenURI);
-        if (!response.ok) throw new Error(`Failed to fetch metadata from ${tokenURI}`);
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching metadata:', error);
-        return null;
+  try {
+    if (tokenURI.startsWith("ipfs://")) {
+      tokenURI = tokenURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
     }
+
+    console.log(`Fetching metadata from TokenURI: ${tokenURI}`);
+    const response = await fetch(tokenURI);
+    if (!response.ok) throw new Error(`Failed to fetch metadata from ${tokenURI}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching metadata:", error);
+    return null;
+  }
 };

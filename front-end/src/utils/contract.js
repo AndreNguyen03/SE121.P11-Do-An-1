@@ -1,39 +1,54 @@
-import { BrowserProvider, ethers } from "ethers";
+import { BrowserProvider, ethers, Interface } from "ethers";
 import contractABINFT from '../../ignition/deployments/chain-11155111/artifacts/SquishySouls.json'
 import contractABIMarketplace from '../../ignition/deployments/chain-11155111/artifacts/Marketplace.json'
 import axiosInstance from "./axiosInstance";
-const API_URL = import.meta.env.VITE_API_URL;
 
 
-const contractAddressNFT = "0x44eCdFA2204Fc4a9c3e8ee8c4cFaa7392aB9cc74";
-const contractAddressMarketplace = "0x81936Ef8ED97A08aD4867b1cDf48A895F8b7e210";
 
-const BASE_CID_NFT = "bafybeibv4rsudbtbuyybffaqwdtn3wpxkfg4dyy33kwwzqvhexowxnwrgi";
+
+const contractAddressNFT = "0x513Ae2fAD04819ad12acb71b5D5998080DD6D478";
+const contractAddressMarketplace = "0x6dbB51Eee7dcAd3109755CdB6F13B2625607122A";
+
 
 
 export async function mintNFT(userAddress, signer) {
-
-  // Chọn tokenId ngẫu nhiên
-  const tokenId = Math.floor(Math.random() * 100);
-  const tokenURI = `ipfs://${BASE_CID_NFT}/${tokenId}.json`;
-
   const contractNFT = new ethers.Contract(contractAddressNFT, contractABINFT.abi, signer);
 
   try {
-    // Gửi giao dịch mint
-    const tx = await contractNFT.mint(userAddress, tokenURI);
+    // Gọi hàm mint
+    const tx = await contractNFT.mint(userAddress);
     console.log("Mint NFT thành công! Đang chờ xác nhận:", tx.hash);
 
     // Chờ giao dịch hoàn tất
     const receipt = await tx.wait();
-    console.log("Mint hoàn tất! Transaction Hash:", receipt);
-    alert(`Mint thành công! Token ID: ${tokenId}`);
+    console.log("Mint hoàn tất! Transaction Hash:", receipt.transactionHash);
+
     return receipt;
   } catch (err) {
     console.error("Mint thất bại:", err);
-    alert("Mint thất bại! Vui lòng thử lại.");
+    throw err;
   }
 }
+
+export async function mintBatchNFT(userAddress, signer, quantity) {
+  const contractNFT = new ethers.Contract(contractAddressNFT, contractABINFT.abi, signer);
+
+  try {
+    // Gọi hàm mintBatch
+    const tx = await contractNFT.mintBatch(userAddress, quantity);
+    console.log(`Minting ${quantity} NFTs... Transaction Hash:`, tx.hash);
+
+    // Chờ giao dịch hoàn tất
+    const receipt = await tx.wait();
+    console.log(`Mint ${quantity} NFTs hoàn tất! Transaction Hash:`, receipt.transactionHash);
+
+    return receipt;
+  } catch (err) {
+    console.error("Mint nhiều NFT thất bại:", err);
+    throw err;
+  }
+}
+
 
 
 export const buyNFT = async (tokenId, price, signer) => {
@@ -68,6 +83,7 @@ export async function cancelListing(tokenId, signer) {
     return receipt;
   } catch (err) {
     console.error("Hủy listing thất bại:", err);
+    throw err
   }
 }
 
@@ -170,3 +186,82 @@ export async function listNFT(tokenId, price) {
     return false;
   }
 }
+
+export async function getUserMintedCount(userAddress) {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const contract = new ethers.Contract(contractAddressNFT, contractABINFT.abi, provider);
+
+  try {
+    const mintedCount = await contract.getUserMintedCount(userAddress);
+    console.log(`Số lượng NFT đã mint bởi ${userAddress}:`, mintedCount.toString());
+    return parseInt(mintedCount.toString(), 10);
+  } catch (error) {
+    console.error("Lỗi khi lấy số lượng NFT đã mint:", error);
+    throw error;
+  }
+}
+
+
+export async function getRemainingTokens() {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const contract = new ethers.Contract(contractAddressNFT, contractABINFT.abi, provider);
+
+  try {
+    const remaining = await contract.getRemainingTokens();
+    console.log("Số lượng NFT còn lại:", remaining.toString());
+    return parseInt(remaining.toString(), 10);
+  } catch (error) {
+    console.error("Lỗi khi lấy số lượng NFT còn lại:", error);
+    throw error;
+  }
+}
+
+
+// Khai báo Interface cho sự kiện Mint
+const mintEventInterface = new Interface([
+  "event Mint(address indexed to, uint256 tokenId, string tokenURI)"
+]);
+
+export const parseMintLogs = (receipt) => {
+  const mintedNFTs = []; // Lưu danh sách NFT đã mint
+
+  receipt.logs.forEach((log) => {
+    try {
+      if (log.fragment && log.fragment.name === "Mint") {
+        // Parse log bằng Interface
+        const parsedLog = mintEventInterface.parseLog(log);
+
+        // Lấy thông tin từ args
+        const tokenId = parsedLog.args.tokenId.toString();
+        const tokenURI = parsedLog.args.tokenURI;
+
+        // Thêm thông tin vào danh sách
+        mintedNFTs.push({ tokenId, tokenURI });
+      }
+    } catch (err) {
+      // Bỏ qua log không khớp với sự kiện Mint
+      console.warn("Log không khớp với sự kiện Mint:", log);
+    }
+  });
+
+  return mintedNFTs; // Trả về danh sách
+};
+export const fetchMetadata = async (tokenURI) => {
+  try {
+    // Chuyển đổi IPFS URI sang HTTP nếu cần
+    const resolvedURI = tokenURI.startsWith("ipfs://")
+      ? tokenURI.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/")
+      : tokenURI;
+
+    // Fetch metadata từ URL
+    const response = await fetch(resolvedURI);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch metadata from ${resolvedURI}`);
+    }
+
+    return await response.json(); // Trả về metadata dưới dạng JSON
+  } catch (error) {
+    console.error(`Error fetching metadata from ${tokenURI}:`, error);
+    return null; // Trả về null nếu có lỗi
+  }
+};
