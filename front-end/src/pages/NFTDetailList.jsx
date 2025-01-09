@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaSpinner } from 'react-icons/fa';
 import { useWalletContext } from '../context/WalletContext';
-import socket from '../utils/socket';
+// import socket from '../utils/socket';
 
 
 const NFTDetailList = ({ nft, closeModal, setNFTs }) => {
@@ -58,7 +58,7 @@ const NFTDetailList = ({ nft, closeModal, setNFTs }) => {
     const sendNotificationToFollowers = async () => {
         const data = { nftTokenId: nft.tokenId, nftName: nft.metadata.name, nftImage: nft.metadata.ipfsImage, listedBy: user.walletAddress, listedByName: user.name }
         console.log(data);
-        socket.emit(`listNFT`, data);
+        // socket.emit(`listNFT`, data);
     };
 
     return (

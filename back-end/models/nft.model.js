@@ -4,22 +4,26 @@ import { Schema, model } from 'mongoose';
 
 const nftSchema = new Schema(
   {
-    tokenId: { type: Number, required: true, unique: true }, // ID của NFT
+    tokenId: { type: Number, required: true, unique: true }, 
     ownerAddress: { type: String, required: true },
-    tokenURI: { type: String, required: true }, // Link metadata của NFT
+    tokenURI: { type: String, required: true }, 
     metadata: {
       name: { type: String },
       description: { type: String },
-      image: { type: String }, // Link hình ảnh NFT
-      attributes: { type: Array }, // Thuộc tính (traits) của NFT
+      image: { type: String }, 
+      attributes: { type: Array }, 
     },
-    created: { type: Date, default: Date.now }, // Thời điểm NFT được tạo ra (mint)
+    created: { type: Date, default: Date.now }, 
     createdBy: { type: String, required: true },
-    isListed: { type: Boolean, default: false }, // NFT có đang được niêm yết để bán không?
-    price: { type: String }, // Giá NFT (nếu có, chỉ khi niêm yết)
-    listedAt: { type: Date }, // Thời gian NFT được niêm yết trên marketplace
+    isListed: { type: Boolean, default: false }, 
+    price: { type: String }, 
+    listedAt: { type: Date }, 
+    favoritesCount: {
+      type: Number,
+      default: 0, 
+    },
   },
-  { timestamps: true } // Tự động thêm createdAt và updatedAt
+  { timestamps: true }
 );
 
 const NFT = model("NFT", nftSchema);

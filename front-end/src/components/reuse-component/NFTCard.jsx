@@ -7,7 +7,7 @@ import ItemBuyModal from '../../pages/ItemBuyModal';
 import ApproveBuyModal from '../../pages/ApproveBuyModal';
 import { toast } from 'react-toastify';
 
-const NFTCard = ({ nft }) => {
+const NFTCard = ({ nft, isFavoritedTab = false, onUpdate }) => {
   const { account, signer } = useWalletContext(); // Get signer from context
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,6 +16,8 @@ const NFTCard = ({ nft }) => {
   const isExplorePage = location.pathname.includes('Explore');
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+
+  console.log(`issFavoriteTab ::: `, isFavoritedTab)
 
   if (!nft || !nft.metadata) {
     return null;
@@ -117,7 +119,7 @@ const NFTCard = ({ nft }) => {
       </div>
 
       {/* Action Buttons */}
-      {account && nft.ownerAddress !== account.toLowerCase() ? (
+      {!isFavoritedTab && (account && nft.ownerAddress !== account.toLowerCase() ? (
         nft.isListed ? (
           <button
             className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700"
@@ -141,7 +143,7 @@ const NFTCard = ({ nft }) => {
         >
           List
         </button>
-      )}
+      ))}
 
       {/* Confirmation Modal */}
       {isCancelModalOpen && (

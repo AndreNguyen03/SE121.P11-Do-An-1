@@ -1,4 +1,10 @@
 {
   "NFTTest#SquishySouls": "0x44eCdFA2204Fc4a9c3e8ee8c4cFaa7392aB9cc74",
-  "Marketplace#Marketplace": "0x81936Ef8ED97A08aD4867b1cDf48A895F8b7e210"
+  "Marketplace#Marketplace": "0x81936Ef8ED97A08aD4867b1cDf48A895F8b7e210",
+  "NFT#SquishySouls": "0xe9AC8Bc5DC58Ff2415DBe2CCE07748fccb3ba335",
+  "MarketplaceTest#Marketplace": "0xbc70e36fBB27df9569918A64974be742f29E60A5",
+  "NFTV2#SquishySouls": "0x6F1391e22a8143a242A2595895D03e1fd15b6dA7",
+  "MarketplaceTest1#Marketplace": "0x881D61e3d6989f31b4917157C0De8a1d3eA4a8FF",
+  "NFTV3#SquishySouls": "0x513Ae2fAD04819ad12acb71b5D5998080DD6D478",
+  "MarketplaceTest2#Marketplace": "0x6dbB51Eee7dcAd3109755CdB6F13B2625607122A"
 }

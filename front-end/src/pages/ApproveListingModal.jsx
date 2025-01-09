@@ -56,7 +56,6 @@ function ApproveListingModal({isOpen, onClose, item, isProcessing, listingPrice 
           </div>
           <div className="ml-auto text-right">
             <p className="text-gray-800 font-bold">{listingPrice || '0.000'} ETH</p>
-            <p className="text-gray-600 text-sm">${item.usdPrice || '0.00'}</p>
           </div>
         </div>
 

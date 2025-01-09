@@ -12,14 +12,17 @@ const Profile = () => {
   const [activityLog, setActivityLog] = useState([]); // Lịch sử hoạt động
   const [userJoinedDate, setUserJoinedDate] = useState(''); // Ngày tham gia
   const [isLoading, setIsLoading] = useState(true); // Trạng thái loading
+  const [favoriteNFTs, setFavoriteNFTs] = useState([]); // Danh sách NFT
 
   // Fetch NFTs thuộc sở hữu hoặc được tạo bởi user
   useEffect(() => {
     async function fetchUserNfts() {
       try {
-        const response = await axiosInstance.get(`/nft/user-nfts/${account}`);
-        if (response?.data) {
-          setNFTs(response.data);
+        const responseUserData = await axiosInstance.get(`/nft/user-nfts/${account}`);
+        const responseUserFavorite = await axiosInstance.get(`/users/favorite/${account}`);
+        if (responseUserData?.data && responseUserFavorite?.data) {
+          setNFTs(responseUserData.data);
+          setFavoriteNFTs(responseUserFavorite.data)
         }
       } catch (error) {
         console.error('Error fetching user NFTs:', error);
@@ -52,7 +55,9 @@ const Profile = () => {
             const activityData = activityResponse.data.actionHistory.map((activity) => ({
               id: activity._id,
               activity: formatActivity(activity),
-              date: new Date(activity.timestamp).toLocaleDateString(),
+              date: new Date(activity.timestamp).toLocaleString('vi-VN', { 
+                timeZone: 'Asia/Ho_Chi_Minh',
+              }),
             }));
             setActivityLog(activityData);
           } else {
@@ -72,16 +77,21 @@ const Profile = () => {
   // Định dạng mô tả hoạt động
   const formatActivity = (activity) => {
     switch (activity.action) {
-      case 'list':
-        return `Listed NFT #${activity.tokenId} for ${activity.price} ETH`;
-      case 'transfer':
-        return `Transferred NFT #${activity.tokenId} to ${activity.to}`;
-      case 'mint':
-        return `Minted NFT #${activity.tokenId}`;
+      case "list":
+        return `Listed NFT #${Number(activity.tokenId) +1} for ${activity.price} ETH`;
+      case "buy":
+        return `Buy NFT #${Number(activity.tokenId) +1} from ${activity.to}`;
+      case "mint":
+        return `Minted NFT #${Number(activity.tokenId) +1} to ${activity.by}`;
+      case "sell":
+        return `Sold NFT #${Number(activity.tokenId) +1} to ${activity.to} for ${activity.price} ETH`;
+      case "cancel":
+        return `Canceled listing for NFT #${Number(activity.tokenId) +1}`;
       default:
-        return `Performed action: ${activity.action} on NFT #${activity.tokenId}`;
+        return `Performed action: ${activity.action} on NFT #${Number(activity.tokenId) +1}`;
     }
   };
+  
 
   // Danh sách các NFT được phân loại
   const ownedList = nfts.filter((nft) => nft.ownerAddress === account);
@@ -192,6 +202,14 @@ const Profile = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
               {createdList.map((nft) => (
                 <NFTCard key={nft.tokenId} nft={nft} />
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'Favorited' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
+              {favoriteNFTs.map((nft) => (
+                <NFTCard key={nft.tokenId} nft={nft} isFavoritedTab={true}/>
               ))}
             </div>
           )}

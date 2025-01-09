@@ -5,7 +5,7 @@ import Menu from './Menu'
 import { useWalletContext } from '../../context/WalletContext';
 import { ethers } from 'ethers';
 import NotificationBell from './NotificationBell';
-import socket from '../../utils/socket';
+// import socket from '../../utils/socket';
 
 function Navbar() {
   const { isConnected, connectWallet, account, logoutWallet, avatar, balance, isLoading, avatarLoaded } = useWalletContext();
@@ -20,7 +20,7 @@ function Navbar() {
     logoutWallet(); // Gọi hàm logout từ WalletContext
     setDropdownVisible(false); // Ẩn menu sau khi logout
 
-    socket.emit('logout', account.toLowerCase());
+    // socket.emit('logout', account.toLowerCase());
   };
 
   return (
@@ -37,7 +37,7 @@ function Navbar() {
           <Link to="/Explore">Explore</Link>
           <Link to="/Mint">Mint</Link>
           <Link to="/profile">Profile</Link>
-          {isConnected && <NotificationBell />}
+          {/* {isConnected && <NotificationBell />} */}
           {isConnected ? (
             <div className="relative">
               <div
@@ -49,7 +49,7 @@ function Navbar() {
                 ) : (
                   <img src={avatar} alt="avatar" className="w-8 h-8 rounded-full" />
                 )}
-                <span className="text-sm font-medium">{balance ? `${balance} SepETH` : "Loading..."}</span>
+                <span className="text-sm font-medium">{balance ? `${balance} ETH` : "Loading..."}</span>
               </div>
 
               {dropdownVisible && (
