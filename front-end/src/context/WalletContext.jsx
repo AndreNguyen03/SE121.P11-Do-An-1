@@ -138,19 +138,7 @@ export const WalletProvider = ({ children }) => {
     };
 
     return (
-        <WalletContext.Provider
-            value={{
-                user,
-                account,
-                isConnected,
-                connectWallet,
-                logoutWallet,
-                avatar,
-                setShowModal,
-                createUser,
-                updateUser,
-            }}
-        >
+        <WalletContext.Provider value={{updateBalance, isLoading, user, balance, avatar, provider, account, setAccount, isConnected, setIsConnected, signer, setSigner, connectWallet, logoutWallet, createUser, getUserInfoByWalletAddress, setShowModal }}>
             {children}
             {showModal && (
                 <UserModal
@@ -165,3 +153,4 @@ export const WalletProvider = ({ children }) => {
 
 // Hook để sử dụng context trong các component
 export const useWalletContext = () => useContext(WalletContext);
+ 

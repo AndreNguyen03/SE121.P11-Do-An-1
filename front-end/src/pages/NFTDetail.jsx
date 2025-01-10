@@ -161,6 +161,24 @@ const NFTDetail = () => {
           </div>
         </div>
 
+        {/* Traits của NFT */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-4">Traits</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {nft.metadata.attributes.map((trait, index) => (
+              <div
+                key={index}
+                className="border rounded-lg p-4 shadow-sm bg-gray-50 text-center"
+              >
+                <p className="text-sm text-gray-500">{trait.trait_type}</p>
+                <p className="font-semibold text-gray-800">{trait.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Lịch sử giao dịch */}
+
         {/* NFT History */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-4">History</h2>

@@ -8,6 +8,7 @@ const router = express.Router();
 router.post('/upload', upload.single('image'), userController.handleCreateUser);
 router.post('/update', upload.single('image'), userController.handleUpdateUser);
 
+router.get('/', userController.handleGetAllUsers);
 // Route để lấy thông tin người dùng theo địa chỉ ví
 router.get('/:walletAddress', userController.handleGetUser);
 

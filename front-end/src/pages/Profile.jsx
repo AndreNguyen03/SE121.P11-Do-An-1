@@ -3,16 +3,30 @@ import Layout from '../components/layout/Layout';
 import NFTCard from '../components/reuse-component/NFTCard';
 import { useWalletContext } from '../context/WalletContext';
 import axiosInstance from '../utils/axiosInstance';
+import ConnectModal from '../components/reuse-component/ConnectModal';
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import user from '../../../back-end/models/user.model';
 import { use } from 'react';
 
 const Profile = () => {
-  const { account, avatar, user, setShowModal } = useWalletContext(); // Lấy thông tin từ WalletContext
+  const { account, avatar, user, setShowModal, isConnected,connectWallet } = useWalletContext(); // Lấy thông tin từ WalletContext
   const [activeTab, setActiveTab] = useState('Owned'); // Tab mặc định
   const [nfts, setNFTs] = useState([]); // Danh sách NFT
   const [activityLog, setActivityLog] = useState([]); // Lịch sử hoạt động
   const [userJoinedDate, setUserJoinedDate] = useState(''); // Ngày tham gia
   const [isLoading, setIsLoading] = useState(true); // Trạng thái loading
+  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
+  const itemsPerPage = 10; // Số lượng item trên mỗi trang
+  const [showConnectModal, setShowConnectModal] = useState(!isConnected); // Hiển thị modal kết nối
+  const navigate = useNavigate(); // Hook để điều hướng
+
+
+  useEffect(() => {
+    if (isConnected) {
+      setShowModal(false); // Đóng modal khi kết nối
+      navigate("/"); // Chuyển hướng về trang chủ
+    }
+  }, [isConnected, navigate]);
 
   // Fetch NFTs thuộc sở hữu hoặc được tạo bởi user
   useEffect(() => {
@@ -96,14 +110,43 @@ const Profile = () => {
     );
   };
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentActivityLog = activityLog.slice(indexOfFirstItem, indexOfLastItem);
+
+  //xử lý chuyển trang
+  const totalPages = Math.ceil(activityLog.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
+    }
+  };
+  
+
   // Nếu user hoặc account chưa sẵn sàng, hiển thị trạng thái loading
-  if (isLoading || !user || !account) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-screen">
           <p className="text-gray-500 text-xl">Loading profile...</p>
         </div>
       </Layout>
+    );
+  }
+
+  // Nếu user chưa kết nối, hiển thị ConnectModal
+  if (!isConnected) {
+    return (
+      <ConnectModal
+        onClose={() => setShowModal(false)} // Đóng modal
+      />
     );
   }
 
@@ -158,11 +201,10 @@ const Profile = () => {
             {['Owned', 'On sale', 'Created', 'Favorited', 'Activity'].map((tab) => (
               <button
                 key={tab}
-                className={`py-2 px-4 font-medium ${
-                  activeTab === tab
-                    ? 'border-b-2 border-green-500 text-gray-900'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`py-2 px-4 font-medium ${activeTab === tab
+                  ? 'border-b-2 border-green-500 text-gray-900'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 onClick={() => setActiveTab(tab)}
               >
                 {tab}
@@ -200,7 +242,7 @@ const Profile = () => {
           {activeTab === 'Activity' && (
             <div>
               {activityLog.length > 0 ? (
-                activityLog.map((log) => (
+                currentActivityLog.map((log) => (
                   <div
                     key={log.id}
                     className="p-4 bg-gray-100 border rounded-lg shadow-sm"
@@ -212,6 +254,30 @@ const Profile = () => {
               ) : (
                 <p className="text-gray-500">No activity found.</p>
               )}
+
+              {/* Nút chuyển trang */}
+              <div className="flex justify-between items-center mt-4">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={handlePreviousPage} // Hàm được gọi ở đây
+                  className={`px-4 py-2 rounded-md ${currentPage === 1 ? 'bg-gray-300' : 'bg-green-500 text-white hover:bg-green-700'
+                    }`}
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={handleNextPage} // Hàm được gọi ở đây
+                  className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-gray-300' : 'bg-green-500 text-white hover:bg-green-700'
+                    }`}
+                >
+                  Next
+                </button>
+              </div>
+
             </div>
           )}
         </div>

@@ -101,3 +101,12 @@ export const updateUser = async ({ walletAddress, name, imagePath }) => {
 
   return updatedUser;
 };
+
+export const getAllUsers = async () => {
+  try {
+    const users = await user.find({}, { password: 0 }); // Bỏ trường `password`
+    return users;
+  } catch (error) {
+    throw new Error('Lỗi khi lấy danh sách người dùng: ' + error.message);
+  }
+};
