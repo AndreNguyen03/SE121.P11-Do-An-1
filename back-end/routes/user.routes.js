@@ -10,7 +10,7 @@ router.post('/update', upload.single('image'), userController.handleUpdateUser);
 
 // Route để lấy thông tin người dùng theo địa chỉ ví
 router.get('/:walletAddress', userController.handleGetUser);
-
+router.get('/', userController.handleGetAllUsers);
 
 router.post('/follow', userController.follow);
 router.post('/unfollow', userController.unfollow);

@@ -8,7 +8,7 @@ import ApproveBuyModal from '../../pages/ApproveBuyModal';
 import { toast } from 'react-toastify';
 
 const NFTCard = ({ nft, isFavoritedTab = false, onUpdate }) => {
-  const { account, signer } = useWalletContext(); // Get signer from context
+  const { account, signer, updateBalance, provider } = useWalletContext(); // Get signer from context
   const navigate = useNavigate();
   const location = useLocation();
   const [isCancelModalOpen, setCancelModalOpen] = useState(false);
@@ -46,12 +46,11 @@ const NFTCard = ({ nft, isFavoritedTab = false, onUpdate }) => {
       if (receipt) {
 
         nft.isListed = false; // Update NFT to be no longer listed
-
+        await updateBalance(account, provider);
         // Call the parent function to update the state (or list)
         if (onUpdate) {
           onUpdate(nft.tokenId, nft); // Pass the updated NFT
         }
-
       }
     } catch (err) {
       console.error("Failed to cancel listing:", err);
@@ -85,6 +84,7 @@ const NFTCard = ({ nft, isFavoritedTab = false, onUpdate }) => {
         setIsLoading(false);
         setIsApproveModalOpen(false);
         setIsBuyModalOpen(true);
+        await updateBalance(account, provider);
       }
     } catch (err) {
       console.error("Failed to purchase NFT:", err);

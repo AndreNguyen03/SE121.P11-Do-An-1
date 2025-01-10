@@ -15,7 +15,7 @@ import { FaSpinner } from "react-icons/fa";
 import { toast } from "react-toastify";
 
 function Create() {
-  const { account, signer, provider } = useWalletContext();
+  const { account, signer, provider, updateBalance } = useWalletContext();
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [remainingSupply, setRemainingSupply] = useState(0);
@@ -123,7 +123,7 @@ function Create() {
           }
         }
       }
-
+      await updateBalance(account, provider);
       setMintedNFTs(mintedNFTList); // Lưu danh sách NFT đã mint
       setIsMinting(false);
       setIsMintSuccess(true);
@@ -134,7 +134,7 @@ function Create() {
       }
       setError("Mint thất bại. Vui lòng thử lại.");
       setIsMinting(false);
-    }
+    } 
 
 
 

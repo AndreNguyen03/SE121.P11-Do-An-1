@@ -1,40 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/layout/Layout';
 import NFTCard from '../components/reuse-component/NFTCard';
 import UserCard from '../components/reuse-component/UserCard';
-import avatar1 from '../assets/avatar1.jpg'
-import avatar2 from '../assets/avatar2.jpg'
-import avatar3 from '../assets/avatar3.jpg'
 import axiosInstance from '../utils/axiosInstance';
-
-
-
-const fakeUsers = [
-  {
-    userId: 1,
-    username: 'CryptoCollector',
-    avatar: avatar1,
-    bio: 'Passionate NFT collector and artist.',
-    itemsOwned: 42,
-    isFollowed: false,
-  },
-  {
-    userId: 2,
-    username: 'ArtisticSoul',
-    avatar: avatar2,
-    bio: 'Digital art enthusiast exploring the metaverse.',
-    itemsOwned: 27,
-    isFollowed: false,
-  },
-  {
-    userId: 3,
-    username: 'John Doe',
-    avatar: avatar3,
-    bio: 'Just John Doe.',
-    itemsOwned: 4,
-    isFollowed: false,
-  },
-];
 
 function Explore() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,6 +13,7 @@ function Explore() {
   const [expandedCategories, setExpandedCategories] = useState({}); // Independent toggle state for each category
   const [allNFTs, setAllNFTs] = useState([])
   const [traitOptions, setTraitOptions] = useState({})
+  const [allUsers, setAllUsers] = useState([])
 
   useEffect(() => {
 
@@ -62,6 +31,60 @@ function Explore() {
 
     fetchAllNFT();
   },[])
+
+  useEffect(() => {
+    async function fetchAllData() {
+      try {
+        const users = await fetchAllUsers(); // Fetch danh sách user
+        setAllUsers(users); // Lưu vào state
+        await fetchUserDataWithNFTs(users); // Truyền users vào hàm tính toán itemsOwned
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    fetchAllData();
+  }, []);
+
+
+
+  async function fetchAllUsers() {
+    try {
+      const response = await axiosInstance.get(`/users/`);
+      console.log("API response:", response.data); // Kiểm tra dữ liệu trả về
+
+      if (Array.isArray(response.data)) {
+        const normalizedUsers = response.data.map((user) => ({
+          userId: user._id,
+          name: user.name || 'Unknown User',
+          walletAddress: user.walletAddress || 'Unknown Address',
+          image: user.image || 'https://via.placeholder.com/150',
+          createdAt : user.createdAt,
+          bio: user.bio || 'No bio provided.',
+          itemsOwned: 0,
+        }));
+        return normalizedUsers; // Trả về danh sách user
+      } else if (response.data.users && Array.isArray(response.data.users)) {
+        const normalizedUsers = response.data.users.map((user) => ({
+          userId: user._id,
+          name: user.name || 'Unknown User',
+          walletAddress: user.walletAddress || 'Unknown Address',
+          image: user.image || 'https://via.placeholder.com/150',
+          createdAt : user.createdAt,
+          bio: user.bio || 'No bio provided.',
+          itemsOwned: 0,
+        }));
+        return normalizedUsers; // Trả về danh sách user
+      } else {
+        console.error("Unexpected data format:", response.data);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return [];
+    }
+  }
+
 
   const generateTraitOptions = (nfts) => {
     const traitMap = {};
@@ -133,9 +156,65 @@ function Explore() {
      return 0;
    });
 
- const filteredUsers = fakeUsers.filter((user) =>
-   user.username.toLowerCase().includes(searchTerm.toLowerCase())
- );
+ const getItemsOwned = async (walletAddress) => {
+  try {
+    const response = await axiosInstance.get(`/nft/user-nfts/${walletAddress}`);
+    if (response && response.data && Array.isArray(response.data)) {
+      return response.data.length;
+    }
+    return 0;
+  } catch (error) {
+    console.error(`Error fetching NFTs for user ${walletAddress}:`, error);
+    return 0;
+  }
+};
+
+const fetchUserDataWithNFTs = async (users) => {
+  try {
+    const updatedUsers = await Promise.all(
+      users.map(async (user) => {
+        const itemsOwned = await getItemsOwned(user.walletAddress);
+        return {
+          ...user,
+          itemsOwned,
+        };
+      })
+    );
+    setAllUsers(updatedUsers); // Cập nhật danh sách user đã có itemsOwned
+  } catch (error) {
+    console.error("Error fetching user data with NFTs:", error);
+  }
+};
+
+useEffect(() => {
+  async function fetchUsersAndItemsOwned() {
+    try {
+      const users = await fetchAllUsers();
+      setAllUsers(users);
+
+      // Chờ state cập nhật hoàn tất trước khi tiếp tục
+      await fetchUserDataWithNFTs(users);
+    } catch (error) {
+      console.error("Error fetching users or NFTs:", error);
+    }
+  }
+
+  fetchUsersAndItemsOwned();
+}, []);
+
+
+
+
+const filteredUsers = useMemo(() => {
+  return allUsers.filter((user) => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchesUsername = user.name?.toLowerCase().includes(searchLower);
+    const matchesWallet = user.walletAddress?.toLowerCase().includes(searchLower);
+    return matchesUsername || matchesWallet;
+  });
+}, [allUsers, searchTerm]);
+
+
   return (
     <Layout>
       <div className="p-6">
@@ -270,7 +349,17 @@ function Explore() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
-                    <UserCard key={user.userId} user={user} />
+                    <UserCard
+                      key={user.userId}
+                      user={{
+                        username: user.name,
+                        avatar: user.image,
+                        bio: user.bio,
+                        walletAddress: user.walletAddress,
+                        itemsOwned: user.itemsOwned,
+                        createdAt: user.createdAt
+                      }}
+                    />
                   ))
                 ) : (
                   <p className="text-gray-500">No users found.</p>
@@ -280,6 +369,9 @@ function Explore() {
           </div>
         </div>
       </div>
+
+
+            
     </Layout>
   );
 }

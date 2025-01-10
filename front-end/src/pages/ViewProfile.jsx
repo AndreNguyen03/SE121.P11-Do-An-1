@@ -1,203 +1,227 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/layout/Layout';
-import Header from '../components/reuse-component/Header';
-import { useLocation } from 'react-router-dom';
-import NFTDetailList from './NFTDetailList';
-import NFTCardProfile from '../components/reuse-component/NFTCardProfile';
-import { FaSpinner } from 'react-icons/fa';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import axiosInstance from '../utils/axiosInstance';
+import NFTCard from '../components/reuse-component/NFTCard';
 import { useWalletContext } from '../context/WalletContext';
+import axiosInstance from '../utils/axiosInstance';
+import user from '../../../back-end/models/user.model';
+import { useLocation } from 'react-router-dom';
 
-function ViewProfile() {
-    const { state } = useLocation();
-    const { account } = useWalletContext();
-    const { owner: accountRef, userInfo: user } = state;
-    const [isFollowing, setIsFollowing] = useState(false); // Trạng thái theo dõi
-    const [showUnfollowModal, setShowUnfollowModal] = useState(false); // Modal xác nhận bỏ theo dõi
-    const [isModalDetailOpen, setIsModalDetailOpen] = useState(false);
-    const [selectedNFT, setSelectedNFT] = useState(null);
-    const [nfts, setNFTs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+const ViewProfile = () => {
+  const [activeTab, setActiveTab] = useState('Owned'); // Tab mặc định
+  const [nfts, setNFTs] = useState([]); // Danh sách NFT
+  const [activityLog, setActivityLog] = useState([]); // Lịch sử hoạt động
+  const [userJoinedDate, setUserJoinedDate] = useState(''); // Ngày tham gia
+  const [isLoading, setIsLoading] = useState(true); // Trạng thái loading
+  const [favoriteNFTs, setFavoriteNFTs] = useState([]); // Danh sách NFT
 
-    const handleListClick = (nft) => {
-        setSelectedNFT(nft);
-        setIsModalDetailOpen(true);
-    };
+  const location = useLocation();
+  const { state } = location;
 
-    const closeModal = () => {
-        setIsModalDetailOpen(false);
-    };
+  console.log("Received state:", state);
 
-    const handleFollow = async () => {
-        if (!isFollowing) {
-            setIsFollowing(true);
-            await axiosInstance.post(`users/follow`, { followerAddress: accountRef.toLowerCase(), followeeAddress: account.toLowerCase() });
-            toast.success('You have followed this user!', {
-                position: "top-right",
-                autoClose: 3000,
-            });
-        } else {
-            setShowUnfollowModal(true);
+
+  // Fetch NFTs thuộc sở hữu hoặc được tạo bởi user
+  useEffect(() => {
+    async function fetchUserNfts() {
+      try {
+        const responseUserData = await axiosInstance.get(`/nft/user-nfts/${state.walletAddress}`);
+        const responseUserFavorite = await axiosInstance.get(`/users/favorite/${state.walletAddress}`);
+        if (responseUserData?.data && responseUserFavorite?.data) {
+          setNFTs(responseUserData.data);
+          setFavoriteNFTs(responseUserFavorite.data)
         }
-    };
+      } catch (error) {
+        console.error('Error fetching user NFTs:', error);
+      }
+    }
 
-    const confirmUnfollow = async () => {
-        setIsFollowing(false);
-        setShowUnfollowModal(false);
-        await axiosInstance.post(`users/unfollow`, { followerAddress: accountRef.toLowerCase(), followeeAddress: account.toLowerCase() });
-        toast.info('You have unfollowed this user.', {
-            position: "top-right",
-            autoClose: 3000,
-        });
+    if (state.walletAddress) {
+      fetchUserNfts();
+    }
+  }, [state]);
 
-    };
+  useEffect(() => {
+    const userJoinedDate = state?.createdAt
+      ? new Date(state.createdAt).toLocaleDateString()
+      : 'Unknown';
+    setUserJoinedDate(userJoinedDate);
+  }, [state]);
 
-    const cancelUnfollow = () => {
-        setShowUnfollowModal(false);
-    };
+  // Fetch thông tin user và lịch sử hoạt động
+  useEffect(() => {
+    async function fetchUserDetails() {
+      try {
+        if (state.walletAddress) {
+          // Fetch lịch sử hoạt động
+          const activityResponse = await axiosInstance.get(`/users/actionhistories/${state.walletAddress}`);
+          console.log('Activity Response:', activityResponse.data);
 
-    useEffect(() => {
-        if (accountRef) {
-            async function fetchNFTs() {
-                try {
-                    console.log(accountRef);
-                    const nfts = await fetchUserNFTs(accountRef);
-                    setNFTs(nfts);
-                    const getUser = await axiosInstance.get(`users/${accountRef}`)
-                    const userRefInfo = getUser.data.user;
-                    console.log(`is follwer `, userRefInfo.followedUsers.includes(account.toLowerCase()))
-                    if (userRefInfo.followedUsers.includes(account.toLowerCase())) {
-                        setIsFollowing(true);
-                    }
-                } catch (error) {
-                    console.error("Error fetching NFTs: ", error);
-                    setError("Failed to load NFTs. Please try again.");
-                } finally {
-                    setLoading(false);
-                }
-            }
-
-
-            fetchNFTs();
+          // Kiểm tra nếu phản hồi chứa trường `actionHistory`
+          if (Array.isArray(activityResponse.data.actionHistory)) {
+            const activityData = activityResponse.data.actionHistory.map((activity) => ({
+              id: activity._id,
+              activity: formatActivity(activity),
+              date: new Date(activity.timestamp).toLocaleString('vi-VN', { 
+                timeZone: 'Asia/Ho_Chi_Minh',
+              }),
+            }));
+            setActivityLog(activityData);
+          } else {
+            console.error('Unexpected response format:', activityResponse.data);
+          }
         }
-    }, [accountRef]);
+      } catch (error) {
+        console.error('Error fetching user details or activity log:', error);
+      } finally {
+        setIsLoading(false); // Tắt trạng thái loading khi dữ liệu đã được tải
+      }
+    }
 
-    const listedNFTs = nfts.filter((nft) => nft.isListed);
-    const unlistedNFTs = nfts.filter((nft) => !nft.isListed);
+    fetchUserDetails();
+  }, [state]);
 
-    return (
-        <>
-            <Layout>
-                <div className="relative flex flex-col items-center mt-20 p-12 bg-white rounded-lg shadow-lg w-11/12 lg:w-[80%] mx-auto">
-                    {/* Profile Image */}
-                    <div className="absolute -top-16 w-40 h-40 rounded-full overflow-hidden shadow-md border-4 border-white">
-                        <img
-                            src={user?.image}
-                            alt="Profile"
-                            className="object-cover w-full h-full"
-                        />
-                    </div>
+  // Định dạng mô tả hoạt động
+  const formatActivity = (activity) => {
+    switch (activity.action) {
+      case "list":
+        return `Listed NFT #${Number(activity.tokenId) +1} for ${activity.price} ETH`;
+      case "buy":
+        return `Buy NFT #${Number(activity.tokenId) +1} from ${activity.to}`;
+      case "mint":
+        return `Minted NFT #${Number(activity.tokenId) +1} to ${activity.by}`;
+      case "sell":
+        return `Sold NFT #${Number(activity.tokenId) +1} to ${activity.to} for ${activity.price} ETH`;
+      case "cancel":
+        return `Canceled listing for NFT #${Number(activity.tokenId) +1}`;
+      default:
+        return `Performed action: ${activity.action} on NFT #${Number(activity.tokenId) +1}`;
+    }
+  };
+  
 
-                    {/* Follow Button */}
-                    {account.toLowerCase() !== accountRef.toLowerCase() && (
-                        <div className="absolute top-15 mt-6">
-                            <button
-                                className={`px-4 py-2 rounded-lg flex items-center justify-center ${isFollowing ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'} hover:opacity-80 transition`}
-                                onClick={handleFollow}
-                                disabled={loading}  // Disable button khi đang loading
-                            >
-                                {loading ? (
-                                    <FaSpinner className="animate-spin text-white" />
-                                ) : isFollowing ? (
-                                    '✔ Following'
-                                ) : (
-                                    '+ Follow'
-                                )}
-                            </button>
-                        </div>
-                    )}
+  // Danh sách các NFT được phân loại
+  const ownedList = nfts.filter((nft) => nft.ownerAddress === state.walletAddress);
+  const onSaleList = nfts.filter((nft) => nft.ownerAddress === state.walletAddress && nft.isListed);
+  const createdList = nfts.filter((nft) => nft.createdBy === state.walletAddress);
 
-                    {/* Profile Info */}
-                    <div className="mt-20 text-center">
-                        <h2 className="text-2xl font-bold text-gray-800">{user?.name}</h2>
-                        <p className="text-gray-500 text-lg mt-3">Wallet Address: {accountRef}</p>
-                    </div>
-
-                    {/* Unlisted NFTs */}
-                    <Header textColor={'text-black'}>Unlisted NFTs</Header>
-                    {loading ? (
-                        <FaSpinner className="animate-spin" />
-                    ) : unlistedNFTs.length === 0 ? (
-                        <p className="text-gray-500 text-center mt-4">
-                            You currently have no unlisted NFTs available for listing. Create or mint a new NFT to get started!
-                        </p>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 mx-auto lg:gap-4">
-                            {unlistedNFTs.map((nft) => (
-                                <div key={nft.tokenId}>
-                                    <NFTCardProfile nft={nft} onClick={() => handleListClick(nft)} />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Listed NFTs */}
-                    <Header textColor={'text-black'}>Listed NFTs</Header>
-                    {loading ? (
-                        <FaSpinner className="animate-spin" />
-                    ) : listedNFTs.length === 0 ? (
-                        <p className="text-gray-500 text-center mt-4">
-                            You currently have no listed NFTs on the marketplace. List an NFT to make it available for trading!
-                        </p>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 mx-auto lg:gap-4">
-                            {listedNFTs.map((nft) => (
-                                <div key={nft.tokenId}>
-                                    <NFTCardProfile nft={nft} />
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </Layout>
-
-            {/* NFT Detail Modal */}
-            {isModalDetailOpen && selectedNFT && (
-                <NFTDetailList nft={selectedNFT} closeModal={closeModal} setNFTs={setNFTs} />
-            )}
-
-            {/* Unfollow Confirmation Modal */}
-            {showUnfollowModal && (
-                <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg p-6 shadow-lg">
-                        <p className="text-lg font-semibold text-gray-800 mb-4">
-                            Are you sure you want to unfollow this user?
-                        </p>
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400"
-                                onClick={cancelUnfollow}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
-                                onClick={confirmUnfollow}
-                            >
-                                Unfollow
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Toast Container */}
-            <ToastContainer />
-        </>
+  // Cập nhật danh sách NFT khi có thay đổi
+  const updateNFTList = (tokenId, updatedNft) => {
+    setNFTs((prevNfts) =>
+      prevNfts.map((nft) => (nft.tokenId === tokenId ? { ...nft, isListed: false } : nft))
     );
-}
+  };
+
+  // Nếu user hoặc account chưa sẵn sàng, hiển thị trạng thái loading
+  if (isLoading || !state) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-gray-500 text-xl">Loading profile...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      {/* Profile Header */}
+      <div className="relative bg-gray-200 h-52">
+        <div className="absolute bottom-0 left-8 transform translate-y-1/2">
+          <div className="w-32 h-32 bg-gradient-to-r from-green-500 to-green-300 rounded-full border-4 border-white flex items-center justify-center">
+            {state.avatar ? (
+              <img
+                src={state.avatar}
+                alt="Profile"
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <span className="text-white text-3xl font-bold">U</span>
+            )}
+          </div>
+        </div>
+        
+      </div>
+
+      {/* Profile Details */}
+      <div className="pt-16 px-8">
+        <h2 className="text-2xl font-bold">{state.username || 'Unnamed User'}</h2>
+        <p className="text-gray-600">{state.walletAddress}</p>
+        <p className="text-gray-500 text-sm">Joined {userJoinedDate}</p>
+
+        {/* Tabs */}
+        <div className="mt-8 border-b border-gray-300">
+          <nav className="flex space-x-6">
+            {['Owned', 'On sale', 'Created', 'Favorited', 'Activity'].map((tab) => (
+              <button
+                key={tab}
+                className={`py-2 px-4 font-medium ${
+                  activeTab === tab
+                    ? 'border-b-2 border-green-500 text-gray-900'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="mt-6">
+          {activeTab === 'Owned' && (
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
+              {ownedList.map((nft) => (
+                <NFTCard key={nft.tokenId} nft={nft} onUpdate={updateNFTList} />
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'On sale' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
+              {onSaleList.map((nft) => (
+                <NFTCard key={nft.tokenId} nft={nft} />
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'Created' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
+              {createdList.map((nft) => (
+                <NFTCard key={nft.tokenId} nft={nft} />
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'Favorited' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-6">
+              {favoriteNFTs.map((nft) => (
+                <NFTCard key={nft.tokenId} nft={nft} isFavoritedTab={true}/>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'Activity' && (
+            <div>
+              {activityLog.length > 0 ? (
+                activityLog.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-4 bg-gray-100 border rounded-lg shadow-sm"
+                  >
+                    <p>{log.activity}</p>
+                    <p className="text-sm text-gray-500">{log.date}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No activity found.</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+};
 
 export default ViewProfile;

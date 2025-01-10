@@ -16,7 +16,7 @@ const NFTDetail = () => {
   const { tokenId } = useParams();
   const [nft, setNft] = useState(null);
   const [ownerInfo, setOwnerInfo] = useState(null); // Thông tin chủ sở hữu NFT
-  const { account, signer, getUserInfoByWalletAddress,user, setUser } = useWalletContext();
+  const { account, signer, getUserInfoByWalletAddress, user, setUser, updateBalance } = useWalletContext();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isItemBuyModalOpen, setIsItemBuyModalOpen] = useState(false);
@@ -36,8 +36,9 @@ const NFTDetail = () => {
           // Fetch user info of NFT owner
           const ownerData = await getUserInfoByWalletAddress(nftData.ownerAddress);
           setOwnerInfo(ownerData?.user);
-          console.log(`TOkenid favorite list: ::`,user.favorites, tokenId)
-          console.log(`is favorite :::`, user.favorites?.includes(Number(tokenId)), user);
+
+
+
           setIsFavorited(user.favorites?.includes(Number(tokenId)) || false);
         } else {
           console.log("No data found for this tokenId");
@@ -64,6 +65,7 @@ const NFTDetail = () => {
       if (receipt) {
         setIsApproveModalOpen(false);
         setIsItemBuyModalOpen(true);
+        await updateBalance();
       } else {
         alert("Unable to complete the purchase. Please try again.");
       }
@@ -82,12 +84,12 @@ const NFTDetail = () => {
     // Optimistic UI update
     setIsFavorited((prev) => !prev);
     setFavorites((prev) => (isFavorited ? prev - 1 : prev + 1));
-  
+
     try {
       const endpoint = isFavorited
         ? `/users/remove-favorite`
         : `/users/add-favorite`;
-  
+
       // Perform the API call in the background
       await axiosInstance.post(endpoint, {
         userAddress: account,
@@ -96,10 +98,10 @@ const NFTDetail = () => {
 
       const updatedUser = await getUserInfoByWalletAddress(account);
 
-    // Update user in WalletContext
-    if (updatedUser) {
-      setUser(updatedUser.user); // This updates the user globally in your WalletContext
-    }
+      // Update user in WalletContext
+      if (updatedUser) {
+        setUser(updatedUser.user); // This updates the user globally in your WalletContext
+      }
     } catch (error) {
       // Revert UI changes if the API fails
       setIsFavorited((prev) => !prev);
@@ -123,6 +125,23 @@ const NFTDetail = () => {
     navigate("/listing", { state: { nft } });
   };
 
+  const handleNavigateProfile = () => {
+    if(ownerInfo.walletAddress === account.toLowerCase()) {
+      navigate(`/profile`);
+    }
+    else
+    {
+      navigate(`/profile/${ownerInfo.walletAddress}`, {
+        state: {
+          username: ownerInfo.name,
+          avatar: ownerInfo.image,
+          walletAddress: ownerInfo.walletAddress,
+          createdAt: ownerInfo.createdAt
+        }
+      })
+    }
+  }
+
   return (
     <Layout>
       <div className="container mx-auto p-6">
@@ -134,7 +153,7 @@ const NFTDetail = () => {
               alt={nft.metadata.name}
               className="w-full object-cover"
             />
-            
+
             <div
               className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-lg cursor-pointer"
               onClick={handleFavoriteDebounced}
@@ -165,7 +184,8 @@ const NFTDetail = () => {
               <img
                 src={ownerInfo?.image || "/default-avatar.png"}
                 alt={ownerInfo?.name || "Unknown"}
-                className="w-16 h-16 rounded-full border object-cover"
+                className="w-16 h-16 rounded-full border object-cover cursor-pointer"
+                onClick={() => handleNavigateProfile()}
               />
               <div>
                 <p className="text-sm text-gray-500">Current owner:</p>
