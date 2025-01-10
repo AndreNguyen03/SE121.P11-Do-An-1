@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { replaceIpfsWithGateway } from '../utils';
 import { approveNFT, listNFT } from '../utils/contract';
 import { FaSpinner } from 'react-icons/fa';
+import { useWalletContext } from '../context/WalletContext';
 
 function NFTListingPage() {
     const navigate = useNavigate();
@@ -19,6 +20,8 @@ function NFTListingPage() {
     const [price, setPrice] = useState('');
     const [listingPrice, setListingPrice] = useState(0);
     const feePercentage = 2.5;
+
+    const { updateBalance, account,provider } = useWalletContext();
 
     if (!nft) {
         navigate(-1);
@@ -54,7 +57,7 @@ function NFTListingPage() {
                 setIsModalOpen(false);
                 alert('Approval failed. Please try again.');
                 return;
-            } 
+            }
 
             // Bước 3: Tiến hành niêm yết NFT sau khi phê duyệt thành công
             const listSuccess = await listNFT(nft.tokenId, listingPrice);
@@ -64,6 +67,7 @@ function NFTListingPage() {
                 setIsProcessing(false);
                 setIsModalOpen(false);
                 setIsItemListedModalOpen(true);
+                await updateBalance(account,provider);
             } else {
                 setIsProcessing(false);
                 setIsModalOpen(false);
@@ -72,7 +76,6 @@ function NFTListingPage() {
             setIsProcessing(false);
             console.error('Error in handleListItem:', error);
             setIsModalOpen(false);
-            
         }
     };
 

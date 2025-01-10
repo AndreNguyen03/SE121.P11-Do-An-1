@@ -1,14 +1,29 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useWalletContext } from '../../context/WalletContext';
 
 function UserCard({ user }) {
-  const [isFollowed, setIsFollowed] = useState(user.isFollowed);
+  const { account } = useWalletContext();
+  const navigate = useNavigate();
 
-  const handleFollowToggle = () => {
-    setIsFollowed((prev) => !prev);
+  console.log("Dữ liệu user trong UserCard:", user);
+
+  const handleCardClick = () => {
+    if (!user.walletAddress) {
+      console.error("walletAddress của user bị undefined:", user);
+      return;
+    }
+
+    if (account.toLowerCase() === user.walletAddress) {
+      navigate(`/profile`);
+    } else {
+      navigate(`/profile/${user.walletAddress}`, { state: user });
+    }
   };
 
   return (
-    <div className="border rounded-lg shadow-md p-4 hover:shadow-lg transition bg-white">
+    <div className="border rounded-lg shadow-md p-4 hover:shadow-lg transition bg-white"
+    >
       <img
         src={user.avatar}
         alt={user.username}
@@ -20,12 +35,10 @@ function UserCard({ user }) {
         <strong>{user.itemsOwned}</strong> items owned
       </p>
       <button
-        className={`mt-4 w-full py-2 rounded-lg text-white ${
-          isFollowed ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
-        }`}
-        onClick={handleFollowToggle}
+        className={`mt-4 w-full py-2 rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition`}
+        onClick={handleCardClick}
       >
-        {isFollowed ? 'Unfollow' : 'Follow'}
+        View Profile
       </button>
     </div>
   );
