@@ -91,6 +91,39 @@ export const handleUpdateUser = async (req, res) => {
   }
 };
 
+export async function handleAddFavorite(req, res) {
+  const { userAddress, tokenId } = req.body;
+  console.log(`favoriteeeeeeeee::::`,userAddress, tokenId)
+  try {
+    const result = await userService.addFavorite({userAddress, tokenId});
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+export async function handleRemoveFavorite(req, res) {
+  const { userAddress, tokenId } = req.body;
+
+  try {
+    const result = await userService.removeFavorite(userAddress, tokenId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+export async function handleGetFavorites(req, res) {
+  const { userAddress } = req.params;
+
+  try {
+    const favorites = await userService.getFavorites(userAddress);
+    res.status(200).json(favorites);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
 export const handleGetAllUsers = async (req, res) => {
   try {
     const users = await userService.getAllUsers();

@@ -6,7 +6,7 @@ const actionHistorySchema = new Schema({
     tokenId: { type: String, required: true },
     action: {
         type: String,
-        enum: ['mint', 'list', 'buy', 'cancel', 'transfer'],
+        enum: ['mint', 'list', 'buy', 'cancel', 'sell'],
         required: true,
     },
     by: { type: String, required: true }, // Người thực hiện thao tác

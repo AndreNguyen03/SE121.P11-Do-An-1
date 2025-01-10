@@ -10,7 +10,7 @@ function ApproveBuyModal({ isOpen, onClose, item, isProcessing }) {
   }, [])
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white w-100 p-6 rounded-lg shadow-lg">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Approve purchase</h2>
@@ -56,7 +56,6 @@ function ApproveBuyModal({ isOpen, onClose, item, isProcessing }) {
           </div>
           <div className="ml-auto text-right">
             <p className="text-gray-800 font-bold">{item.price || '0.000'} ETH</p>
-            <p className="text-gray-600 text-sm">${item.usdPrice || '0.00'}</p>
           </div>
         </div>
 

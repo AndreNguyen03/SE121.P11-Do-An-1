@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWalletContext } from '../../context/WalletContext';
 import { replaceIpfsWithGateway } from '../../utils/index';
-import { cancelListing } from '../../utils/contract'; // Import cancelListing function
+import { buyNFT, cancelListing } from '../../utils/contract'; // Import cancelListing function
 import ItemBuyModal from '../../pages/ItemBuyModal';
 import ApproveBuyModal from '../../pages/ApproveBuyModal';
-import { buyNFT } from '../../utils/contract';
+import { toast } from 'react-toastify';
 
-const NFTCard = ({ nft }) => {
+const NFTCard = ({ nft, isFavoritedTab = false, onUpdate }) => {
   const { account, signer } = useWalletContext(); // Get signer from context
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,6 +16,8 @@ const NFTCard = ({ nft }) => {
   const isExplorePage = location.pathname.includes('Explore');
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
+
+  console.log(`issFavoriteTab ::: `, isFavoritedTab)
 
   if (!nft || !nft.metadata) {
     return null;
@@ -42,7 +44,6 @@ const NFTCard = ({ nft }) => {
       const receipt = await cancelListing(nft.tokenId, signer);
 
       if (receipt) {
-        alert(`Listing for Token ID ${nft.tokenId} has been successfully canceled!`);
 
         nft.isListed = false; // Update NFT to be no longer listed
 
@@ -51,12 +52,13 @@ const NFTCard = ({ nft }) => {
           onUpdate(nft.tokenId, nft); // Pass the updated NFT
         }
 
-      } else {
-        alert("Unable to cancel listing. Please try again.");
       }
     } catch (err) {
       console.error("Failed to cancel listing:", err);
-      alert("An error occurred while canceling the listing. Please try again.");
+      if (err.info.error.code === 4001) {
+        toast.info("User rejected transaction! .");
+      }
+
     } finally {
       setIsLoading(false); // Stop loading
       setCancelModalOpen(false); // Close modal
@@ -69,25 +71,27 @@ const NFTCard = ({ nft }) => {
 
   const handleBuy = async () => {
     try {
+      console.log(`Listed :::`, nft.isListed);
       setIsLoading(true); // Bắt đầu quá trình xử lý
 
       console.log(`Purchasing NFT with Token ID: ${nft.tokenId}`);
+      setIsApproveModalOpen(true);
 
       // Gọi hàm buyNFT để mua NFT
       const receipt = await buyNFT(nft.tokenId, nft.price, signer);
 
       if (receipt) {
-        alert(`NFT with Token ID ${nft.tokenId} has been successfully purchased!`);
-        nft.isListed = false; 
+        nft.isListed = false;
         setIsLoading(false);
-        setIsApproveModalOpen(false); 
+        setIsApproveModalOpen(false);
         setIsBuyModalOpen(true);
-      } else {
-        alert("Unable to purchase the NFT. Please try again.");
       }
     } catch (err) {
       console.error("Failed to purchase NFT:", err);
-      alert("An error occurred while purchasing the NFT. Please try again.");
+      setIsApproveModalOpen(false);
+      if (err.info.error.code === 4001) {
+        toast.info("User rejected transaction! .");
+      }
     } finally {
       setIsLoading(false); // Dừng quá trình xử lý
     }
@@ -115,7 +119,7 @@ const NFTCard = ({ nft }) => {
       </div>
 
       {/* Action Buttons */}
-      {account && nft.ownerAddress !== account.toLowerCase() ? (
+      {!isFavoritedTab && (account && nft.ownerAddress !== account.toLowerCase() ? (
         nft.isListed ? (
           <button
             className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700"
@@ -139,7 +143,7 @@ const NFTCard = ({ nft }) => {
         >
           List
         </button>
-      )}
+      ))}
 
       {/* Confirmation Modal */}
       {isCancelModalOpen && (
@@ -168,16 +172,16 @@ const NFTCard = ({ nft }) => {
           </div>
         </div>
       )}
-      <ApproveBuyModal 
-        isOpen={isApproveModalOpen} 
-        onClose={() => setIsApproveModalOpen(false)} 
+      <ApproveBuyModal
+        isOpen={isApproveModalOpen}
+        onClose={() => setIsApproveModalOpen(false)}
         item={nft}
         isProcessing={isLoading}
       />
 
-      <ItemBuyModal 
-        isOpen={isBuyModalOpen} 
-        onClose={() => setIsBuyModalOpen(false)} 
+      <ItemBuyModal
+        isOpen={isBuyModalOpen}
+        onClose={() => setIsBuyModalOpen(false)}
         item={nft}
       />
 

@@ -3,7 +3,7 @@ import { BsBell } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 import { useWalletContext } from "../../context/WalletContext";
 import axiosInstance from "../../utils/axiosInstance"; // Kiểm tra `api` có được import
-import socket from "../../utils/socket"; // Đảm bảo socket được khởi tạo
+// import socket from "../../utils/socket"; // Đảm bảo socket được khởi tạo
 import axios from "axios";
 
 const NotificationBell = () => {
@@ -27,7 +27,7 @@ const NotificationBell = () => {
   useEffect(() => {
     if (!isConnected && !account) return;
     console.log(`Noti useEffect`)
-    socket.emit("register", account.toLowerCase());
+    // socket.emit("register", account.toLowerCase());
 
     const handleNewNotification = (notification) => {
       setNotifications((prev) => [notification, ...prev]);
@@ -35,11 +35,11 @@ const NotificationBell = () => {
       console.log(notification.nftImage)
     };
 
-    socket.on("newNotification", handleNewNotification);
+    // socket.on("newNotification", handleNewNotification);
 
-    return () => {
-      socket.off("newNotification", handleNewNotification);
-    };
+    // return () => {
+    //   socket.off("newNotification", handleNewNotification);
+    // };
   }, [account]);
 
   useEffect(() => {

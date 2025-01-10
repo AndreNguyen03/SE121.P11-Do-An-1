@@ -18,5 +18,9 @@ router.post('/unfollow', userController.unfollow);
 
 router.get('/actionhistories/:walletAddress', userController.handleGetUserActionHistory);
 
+router.post('/add-favorite', userController.handleAddFavorite);
+router.post('/remove-favorite', userController.handleRemoveFavorite);
+router.get('/favorite/:userAddress', userController.handleGetFavorites);
+
 
 export default router;

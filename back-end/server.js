@@ -3,7 +3,7 @@ import http from 'http';
 import setupSocket from './socket.js';
 
 const server = http.createServer(app);
-setupSocket(server);
+// setupSocket(server);
 
 const PORT = process.env.PORT || 3055;
 

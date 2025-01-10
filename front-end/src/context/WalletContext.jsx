@@ -26,6 +26,7 @@ export const WalletProvider = ({ children }) => {
         try {
             const rawBalance = await provider.getBalance(account);
             const formattedBalance = ethers.formatEther(rawBalance).slice(0, 6);
+            setBalance(formattedBalance);
             console.log('Balance updated:', formattedBalance);
         } catch (error) {
             console.error('Error updating balance:', error);
@@ -138,7 +139,13 @@ export const WalletProvider = ({ children }) => {
     };
 
     return (
-        <WalletContext.Provider value={{updateBalance, isLoading, user, balance, avatar, provider, account, setAccount, isConnected, setIsConnected, signer, setSigner, connectWallet, logoutWallet, createUser, getUserInfoByWalletAddress, setShowModal }}>
+        <WalletContext.Provider
+            value={{
+                setUser,
+                createUser,
+                updateUser, updateBalance, isLoading, user, balance, avatar, provider, account, setAccount, isConnected, setIsConnected, signer, setSigner, connectWallet, logoutWallet, createUser, getUserInfoByWalletAddress, setShowModal
+            }}
+        >
             {children}
             {showModal && (
                 <UserModal

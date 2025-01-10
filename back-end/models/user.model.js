@@ -19,8 +19,8 @@ const User = new Schema(
       unique: true, // Đảm bảo không trùng lặp
       trim: true, // Tự động xóa khoảng trắng
     },
-    followedUsers: [{ type: String }],
     notifications: [Notification], // Thêm mảng thông báo
+    favorites: [{type:Number}],
   },
   {
     timestamps: true, // Tự động thêm `createdAt` và `updatedAt`
